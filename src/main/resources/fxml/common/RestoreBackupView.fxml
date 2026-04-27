@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.gymapp.ui.common.RestoreBackupController"
+      styleClass="page-root">
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <Label text="Відновлення backup" styleClass="page-title"/>
+    <Label text="Оберіть backup-файл для відновлення" styleClass="muted-text"/>
+
+    <ListView fx:id="backupListView" VBox.vgrow="ALWAYS"/>
+
+    <Label fx:id="errorLabel" text="" styleClass="error-label"/>
+
+    <HBox spacing="12">
+        <Button text="Відновити"
+                onAction="#onRestore"
+                styleClass="primary-button"/>
+
+        <Button text="Закрити"
+                onAction="#onClose"
+                styleClass="button"/>
+    </HBox>
+
+</VBox>

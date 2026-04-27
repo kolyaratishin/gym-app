@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.gymapp.ui.client.ClientDetailsController"
+      spacing="20"
+      styleClass="page-root">
+
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <VBox spacing="4">
+            <Label text="Деталі клієнта" styleClass="page-title"/>
+            <Label text="Інформація про клієнта та його абонемент" styleClass="muted-text"/>
+        </VBox>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <Label fx:id="visitedTodayIndicatorLabel" text="-" styleClass="status-pill,status-pill-neutral"/>
+        <Label fx:id="membershipAlertIndicatorLabel" text="-" styleClass="status-pill,status-pill-neutral"/>
+    </HBox>
+
+    <HBox spacing="12">
+        <Button text="Зареєструвати відвідування"
+                onAction="#onRegisterVisit"
+                styleClass="button,primary-button"/>
+
+        <Button fx:id="manageMembershipButton"
+                text="Призначити / Замінити абонемент"
+                onAction="#onManageMembership"
+                styleClass="button"/>
+
+        <Button text="Закрити"
+                onAction="#onClose"
+                styleClass="button"/>
+    </HBox>
+
+    <HBox spacing="20" VBox.vgrow="ALWAYS">
+        <VBox spacing="16" styleClass="section-card" HBox.hgrow="ALWAYS">
+            <Label text="Основна інформація" styleClass="section-title"/>
+
+            <GridPane hgap="18" vgap="16">
+                <Label text="ID" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <Label fx:id="idValueLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Ім'я" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <Label fx:id="firstNameValueLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="Прізвище" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <Label fx:id="lastNameValueLabel" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                <Label text="Телефон" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <Label fx:id="phoneValueLabel" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                <Label text="Дата народження" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                <Label fx:id="birthDateValueLabel" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                <Label text="Нотатки" styleClass="form-label" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                <Label fx:id="notesValueLabel" wrapText="true" maxWidth="320" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                <Label text="Дата реєстрації" styleClass="form-label" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                <Label fx:id="registrationDateValueLabel" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                <Label text="Статус клієнта" styleClass="form-label" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                <Label fx:id="activeValueLabel" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+            </GridPane>
+        </VBox>
+
+        <VBox spacing="16" styleClass="section-card" HBox.hgrow="ALWAYS">
+            <Label text="Абонемент" styleClass="section-title"/>
+
+            <GridPane hgap="18" vgap="16">
+                <Label text="Статус" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <Label fx:id="membershipStatusValueLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Тип" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <Label fx:id="membershipTypeValueLabel" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="Політика" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <Label fx:id="membershipPolicyValueLabel" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                <Label text="Ціна" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <Label fx:id="membershipPriceValueLabel" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+                <Label text="Стан по даті" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                <Label fx:id="membershipDateStateValueLabel" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+                <Label text="Дата початку" styleClass="form-label" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+                <Label fx:id="membershipStartDateValueLabel" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+                <Label text="Дата завершення" styleClass="form-label" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+                <Label fx:id="membershipEndDateValueLabel" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+
+                <Label text="Залишок відвідувань" styleClass="form-label" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+                <Label fx:id="membershipRemainingVisitsValueLabel" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+            </GridPane>
+        </VBox>
+    </HBox>
+
+</VBox>

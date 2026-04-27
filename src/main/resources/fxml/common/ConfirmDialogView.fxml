@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.gymapp.ui.common.ConfirmDialogController"
+      styleClass="page-root">
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <HBox spacing="12">
+        <Label fx:id="titleLabel" text="Підтвердження" styleClass="section-title"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label text="?" styleClass="status-pill,status-pill-info"/>
+    </HBox>
+
+    <Label fx:id="messageLabel"
+           text="Текст підтвердження"
+           wrapText="true"
+           style="-fx-font-size: 16px;"/>
+
+    <HBox spacing="12">
+        <Button text="Підтвердити"
+                onAction="#onConfirm"
+                styleClass="primary-button"/>
+
+        <Button text="Скасувати"
+                onAction="#onCancel"
+                styleClass="button"/>
+    </HBox>
+
+</VBox>

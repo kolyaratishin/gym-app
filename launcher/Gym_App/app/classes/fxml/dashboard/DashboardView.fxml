@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.gymapp.ui.dashboard.DashboardController"
+      spacing="20"
+      styleClass="page-root">
+
+    <Label text="Статистика спортзалу" styleClass="page-title"/>
+
+    <GridPane hgap="20" vgap="20">
+
+        <VBox spacing="8"
+              GridPane.rowIndex="0"
+              GridPane.columnIndex="0"
+              styleClass="stat-card">
+            <Label text="Всього клієнтів" styleClass="stat-title"/>
+            <Label fx:id="totalClientsLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <VBox spacing="8"
+              GridPane.rowIndex="0"
+              GridPane.columnIndex="1"
+              styleClass="stat-card">
+            <Label text="Активних клієнтів" styleClass="stat-title"/>
+            <Label fx:id="activeClientsLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <VBox spacing="8"
+              GridPane.rowIndex="1"
+              GridPane.columnIndex="0"
+              styleClass="stat-card">
+            <Label text="Відвідувань сьогодні" styleClass="stat-title"/>
+            <Label fx:id="visitsTodayLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <VBox spacing="8"
+              GridPane.rowIndex="1"
+              GridPane.columnIndex="1"
+              styleClass="stat-card">
+            <Label text="Закінчуються до 7 днів" styleClass="stat-title"/>
+            <Label fx:id="expiringMembershipsLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+    </GridPane>
+
+</VBox>
