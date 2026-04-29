@@ -14,6 +14,7 @@ import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipTypeRepositor
 import com.gymapp.infrastructure.repository.sqlite.SqliteVisitRepository;
 import com.gymapp.infrastructure.util.GymAppUtils;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -105,6 +106,13 @@ public class ClientDetailsController {
     private Label clientNumberValueLabel;
 
     private Client client;
+
+
+    private Runnable onClientUpdated;
+
+    public void setOnClientUpdated(Runnable onClientUpdated) {
+        this.onClientUpdated = onClientUpdated;
+    }
 
     public void setClient(Client client) {
         this.client = client;
@@ -265,7 +273,7 @@ public class ClientDetailsController {
         }
 
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+            FXMLLoader loader = new javafx.fxml.FXMLLoader(
                     getClass().getResource("/fxml/client/ClientMembershipFormView.fxml")
             );
 
@@ -276,7 +284,14 @@ public class ClientDetailsController {
 
             ClientMembershipFormController controller = loader.getController();
             controller.setClient(client);
-            controller.setOnMembershipSaved(() -> loadMembershipInfo(client.getId()));
+            controller.setOnMembershipSaved(() -> {
+                loadMembershipInfo(client.getId());
+                updateVisitedTodayIndicator(client.getId());
+
+                if (onClientUpdated != null) {
+                    onClientUpdated.run();
+                }
+            });
 
             Stage stage = new Stage();
             GymAppUtils.applyResponsiveStageSize(stage, 0.72, 0.92);

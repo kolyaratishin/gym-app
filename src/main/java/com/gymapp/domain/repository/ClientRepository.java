@@ -24,4 +24,6 @@ public interface ClientRepository {
     long countAll();
 
     long countActive();
+
+    boolean existsByClientNumber(Integer clientNumber);
 }

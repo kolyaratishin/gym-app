@@ -8,6 +8,7 @@ import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
 import com.gymapp.infrastructure.repository.sqlite.SqliteClientRepository;
 import com.gymapp.infrastructure.util.GymAppUtils;
+import java.util.List;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -15,8 +16,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-
-import java.util.List;
 import javafx.stage.Stage;
 
 public class ClientsController {
@@ -133,6 +132,7 @@ public class ClientsController {
 
             ClientDetailsController controller = loader.getController();
             controller.setClient(client);
+            controller.setOnClientUpdated(this::loadClients);
 
             Stage stage = new Stage();
             GymAppUtils.applyResponsiveStageSize(stage, 0.72, 0.78);

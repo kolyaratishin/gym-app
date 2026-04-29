@@ -12,6 +12,8 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.CheckBox?>
 <VBox spacing="20"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.gymapp.ui.client.ClientMembershipFormController"
@@ -37,24 +39,42 @@
                           GridPane.rowIndex="0"
                           GridPane.columnIndex="1"/>
 
-                <Label text="Дата початку" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <Label text="Режим перенесення" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <CheckBox fx:id="manualModeCheckBox"
+                          text="Внести існуючий абонемент"
+                          GridPane.rowIndex="1"
+                          GridPane.columnIndex="1"/>
+
+                <Label text="Дата початку" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
                 <DatePicker fx:id="startDatePicker"
                             prefWidth="220"
-                            GridPane.rowIndex="1"
+                            GridPane.rowIndex="2"
                             GridPane.columnIndex="1"/>
 
-                <Label text="Поточний активний абонемент" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <Label text="Дата завершення" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <DatePicker fx:id="endDatePicker"
+                            prefWidth="220"
+                            GridPane.rowIndex="3"
+                            GridPane.columnIndex="1"/>
+
+                <Label text="Залишок тренувань" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                <TextField fx:id="remainingVisitsField"
+                           promptText="Наприклад: 5"
+                           GridPane.rowIndex="4"
+                           GridPane.columnIndex="1"/>
+
+                <Label text="Поточний активний абонемент" styleClass="form-label" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
                 <Label fx:id="currentMembershipLabel"
                        wrapText="true"
                        maxWidth="420"
-                       GridPane.rowIndex="2"
+                       GridPane.rowIndex="5"
                        GridPane.columnIndex="1"/>
 
-                <Label text="Дія при збереженні" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <Label text="Дія при збереженні" styleClass="form-label" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
                 <Label fx:id="replacementInfoLabel"
                        wrapText="true"
                        maxWidth="420"
-                       GridPane.rowIndex="3"
+                       GridPane.rowIndex="6"
                        GridPane.columnIndex="1"/>
             </GridPane>
         </VBox>

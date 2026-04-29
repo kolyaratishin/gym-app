@@ -13,10 +13,7 @@ import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipRepository;
 import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipTypeRepository;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.DatePicker;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
@@ -59,6 +56,15 @@ public class ClientMembershipFormController {
     private Label previewStatusLabel;
 
     @FXML
+    private CheckBox manualModeCheckBox;
+
+    @FXML
+    private DatePicker endDatePicker;
+
+    @FXML
+    private TextField remainingVisitsField;
+
+    @FXML
     private Label errorLabel;
 
     public ClientMembershipFormController() {
@@ -93,10 +99,41 @@ public class ClientMembershipFormController {
             }
         });
 
-        membershipTypeBox.valueProperty().addListener((observable, oldValue, newValue) -> updatePreview());
+        membershipTypeBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+            updateManualFieldsState();
+            updatePreview();
+        });
         startDatePicker.valueProperty().addListener((observable, oldValue, newValue) -> updatePreview());
 
+        manualModeCheckBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            updateManualFieldsState();
+            updatePreview();
+        });
+
+        endDatePicker.valueProperty().addListener((observable, oldValue, newValue) -> updatePreview());
+        remainingVisitsField.textProperty().addListener((observable, oldValue, newValue) -> updatePreview());
+
+        updateManualFieldsState();
+
         clearPreview();
+    }
+
+    private void updateManualFieldsState() {
+        boolean manualMode = manualModeCheckBox.isSelected();
+        MembershipType selectedType = membershipTypeBox.getValue();
+
+        endDatePicker.setDisable(!manualMode);
+        remainingVisitsField.setDisable(true);
+
+        if (!manualMode) {
+            endDatePicker.setValue(null);
+            remainingVisitsField.clear();
+            return;
+        }
+
+        if (selectedType != null && selectedType.getVisitPolicy() == VisitPolicy.LIMITED_BY_VISITS) {
+            remainingVisitsField.setDisable(false);
+        }
     }
 
     public void setClient(Client client) {
@@ -123,10 +160,35 @@ public class ClientMembershipFormController {
         MembershipType selectedType = membershipTypeBox.getValue();
         LocalDate startDate = startDatePicker.getValue();
 
-        if (membershipService.findActiveByClientId(client.getId()).isPresent()) {
-            membershipService.replaceMembership(client.getId(), selectedType, startDate);
+        boolean hasActiveMembership = membershipService.findActiveByClientId(client.getId()).isPresent();
+
+        if (manualModeCheckBox.isSelected()) {
+            LocalDate endDate = endDatePicker.getValue();
+            Integer remainingVisits = parseRemainingVisitsOrNull();
+
+            if (hasActiveMembership) {
+                membershipService.replaceWithManualMembership(
+                        client.getId(),
+                        selectedType,
+                        startDate,
+                        endDate,
+                        remainingVisits
+                );
+            } else {
+                membershipService.createManualMembership(
+                        client.getId(),
+                        selectedType,
+                        startDate,
+                        endDate,
+                        remainingVisits
+                );
+            }
         } else {
-            membershipService.createMembership(client.getId(), selectedType, startDate);
+            if (hasActiveMembership) {
+                membershipService.replaceMembership(client.getId(), selectedType, startDate);
+            } else {
+                membershipService.createMembership(client.getId(), selectedType, startDate);
+            }
         }
 
         if (onMembershipSaved != null) {
@@ -188,6 +250,24 @@ public class ClientMembershipFormController {
         previewPolicyLabel.setText(formatVisitPolicy(visitPolicy));
         previewStatusLabel.setText("Активний");
 
+        if (manualModeCheckBox.isSelected()) {
+            previewEndDateLabel.setText(
+                    endDatePicker.getValue() != null ? endDatePicker.getValue().toString() : "-"
+            );
+
+            if (visitPolicy == VisitPolicy.LIMITED_BY_VISITS) {
+                previewRemainingVisitsLabel.setText(
+                        valueOrEmpty(remainingVisitsField.getText()).isBlank()
+                                ? "-"
+                                : remainingVisitsField.getText().trim()
+                );
+            } else {
+                previewRemainingVisitsLabel.setText("-");
+            }
+
+            return;
+        }
+
         switch (visitPolicy) {
             case LIMITED_BY_VISITS -> {
                 if (selectedType.getDurationDays() != null) {
@@ -206,6 +286,7 @@ public class ClientMembershipFormController {
                 } else {
                     previewEndDateLabel.setText("-");
                 }
+
                 previewRemainingVisitsLabel.setText("-");
             }
         }
@@ -223,7 +304,9 @@ public class ClientMembershipFormController {
             return "Клієнт не вибраний";
         }
 
-        if (membershipTypeBox.getValue() == null) {
+        MembershipType selectedType = membershipTypeBox.getValue();
+
+        if (selectedType == null) {
             return "Потрібно вибрати тип абонемента";
         }
 
@@ -231,7 +314,50 @@ public class ClientMembershipFormController {
             return "Потрібно вибрати дату початку";
         }
 
+        if (!manualModeCheckBox.isSelected()) {
+            return null;
+        }
+
+        if (endDatePicker.getValue() == null) {
+            return "Потрібно вказати дату завершення";
+        }
+
+        if (endDatePicker.getValue().isBefore(startDatePicker.getValue())) {
+            return "Дата завершення не може бути раніше дати початку";
+        }
+
+        if (selectedType.getVisitPolicy() == VisitPolicy.LIMITED_BY_VISITS) {
+            String remainingVisits = valueOrEmpty(remainingVisitsField.getText()).trim();
+
+            if (remainingVisits.isEmpty()) {
+                return "Потрібно вказати залишок тренувань";
+            }
+
+            try {
+                int parsed = Integer.parseInt(remainingVisits);
+                if (parsed < 0) {
+                    return "Залишок тренувань не може бути від'ємним";
+                }
+            } catch (NumberFormatException e) {
+                return "Залишок тренувань має бути числом";
+            }
+        }
+
         return null;
+    }
+
+    private Integer parseRemainingVisitsOrNull() {
+        String value = valueOrEmpty(remainingVisitsField.getText()).trim();
+
+        if (value.isEmpty()) {
+            return null;
+        }
+
+        return Integer.parseInt(value);
+    }
+
+    private String valueOrEmpty(String value) {
+        return value == null ? "" : value;
     }
 
     private String formatVisitPolicy(VisitPolicy visitPolicy) {

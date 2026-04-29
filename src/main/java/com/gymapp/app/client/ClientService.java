@@ -46,7 +46,14 @@ public class ClientService {
         clientRepository.update(client);
     }
 
+    public boolean existsByClientNumber(Integer clientNumber) {
+        return clientRepository.existsByClientNumber(clientNumber);
+    }
+
     public Client createEmptyClient(Integer clientNumber) {
+        if (clientRepository.existsByClientNumber(clientNumber)) {
+            throw new RuntimeException("Клієнт з номером " + clientNumber + " вже існує");
+        }
         Client client = new Client();
         client.setClientNumber(clientNumber);
         client.setFirstName("");

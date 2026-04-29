@@ -67,4 +67,72 @@ public class MembershipService {
     public void expireOutdatedMemberships() {
         membershipRepository.expireOutdatedMemberships(LocalDate.now());
     }
+
+    public Membership createManualMembership(
+            Long clientId,
+            MembershipType membershipType,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer remainingVisits
+    ) {
+        Membership membership = buildManualMembership(
+                clientId,
+                membershipType,
+                startDate,
+                endDate,
+                remainingVisits
+        );
+
+        return membershipRepository.save(membership);
+    }
+
+    public Membership replaceWithManualMembership(
+            Long clientId,
+            MembershipType membershipType,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer remainingVisits
+    ) {
+        membershipRepository.deactivateActiveByClientId(clientId);
+
+        Membership membership = buildManualMembership(
+                clientId,
+                membershipType,
+                startDate,
+                endDate,
+                remainingVisits
+        );
+
+        return membershipRepository.save(membership);
+    }
+
+    private Membership buildManualMembership(
+            Long clientId,
+            MembershipType membershipType,
+            LocalDate startDate,
+            LocalDate endDate,
+            Integer remainingVisits
+    ) {
+        Membership membership = new Membership();
+        membership.setClientId(clientId);
+        membership.setMembershipTypeId(membershipType.getId());
+        membership.setStartDate(startDate);
+        membership.setEndDate(endDate);
+
+        if (membershipType.getVisitPolicy() == VisitPolicy.LIMITED_BY_VISITS) {
+            membership.setRemainingVisits(remainingVisits);
+        } else {
+            membership.setRemainingVisits(null);
+        }
+
+        if (endDate != null && endDate.isBefore(LocalDate.now())) {
+            membership.setStatus(MembershipStatus.EXPIRED);
+        } else if (remainingVisits != null && remainingVisits <= 0) {
+            membership.setStatus(MembershipStatus.EXPIRED);
+        } else {
+            membership.setStatus(MembershipStatus.ACTIVE);
+        }
+
+        return membership;
+    }
 }

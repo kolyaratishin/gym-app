@@ -389,4 +389,26 @@ public class SqliteClientRepository implements ClientRepository {
             return false;
         }
     }
+
+    @Override
+    public boolean existsByClientNumber(Integer clientNumber) {
+        String sql = """
+            SELECT 1
+            FROM clients
+            WHERE client_number = ?
+            LIMIT 1
+            """;
+
+        try (Connection connection = connectionFactory.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, clientNumber);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to check client number: " + clientNumber, e);
+        }
+    }
 }

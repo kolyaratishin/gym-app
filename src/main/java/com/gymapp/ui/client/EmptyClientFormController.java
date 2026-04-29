@@ -65,6 +65,10 @@ public class EmptyClientFormController {
             if (parsed <= 0) {
                 return "Номер клієнта має бути більше 0";
             }
+
+            if (clientService.existsByClientNumber(parsed)) {
+                return "Клієнт з таким номером вже існує";
+            }
         } catch (NumberFormatException e) {
             return "Номер клієнта має бути числом";
         }
