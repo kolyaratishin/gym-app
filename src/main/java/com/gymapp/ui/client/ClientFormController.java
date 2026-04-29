@@ -5,14 +5,13 @@ import com.gymapp.domain.client.Client;
 import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
 import com.gymapp.infrastructure.repository.sqlite.SqliteClientRepository;
+import java.time.LocalDate;
 import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
-
-import java.time.LocalDate;
 
 public class ClientFormController {
 
@@ -25,6 +24,9 @@ public class ClientFormController {
         SqliteClientRepository clientRepository = new SqliteClientRepository(connectionFactory);
         this.clientService = new ClientService(clientRepository);
     }
+
+    @FXML
+    private TextField clientNumberField;
 
     @FXML
     private TextField firstNameField;
@@ -51,6 +53,7 @@ public class ClientFormController {
     public void setClient(Client client) {
         this.editingClient = client;
 
+        clientNumberField.setText(client.getClientNumber().toString());
         firstNameField.setText(client.getFirstName());
         lastNameField.setText(client.getLastName());
         phoneField.setText(client.getPhone());
@@ -68,6 +71,7 @@ public class ClientFormController {
 
         if (editingClient == null) {
             Client client = new Client();
+            client.setClientNumber(Integer.valueOf(clientNumberField.getText().trim()));
             client.setFirstName(firstNameField.getText().trim());
             client.setLastName(lastNameField.getText().trim());
             client.setPhone(emptyToNull(phoneField.getText()));
@@ -78,6 +82,7 @@ public class ClientFormController {
 
             clientService.save(client);
         } else {
+            editingClient.setClientNumber(Integer.valueOf(clientNumberField.getText().trim()));
             editingClient.setFirstName(firstNameField.getText().trim());
             editingClient.setLastName(lastNameField.getText().trim());
             editingClient.setPhone(emptyToNull(phoneField.getText()));
@@ -100,9 +105,15 @@ public class ClientFormController {
     }
 
     private String validateForm() {
+        String clientNumber = clientNumberField.getText() != null ? clientNumberField.getText().trim() : "";
         String firstName = firstNameField.getText() != null ? firstNameField.getText().trim() : "";
         String lastName = lastNameField.getText() != null ? lastNameField.getText().trim() : "";
         String phone = phoneField.getText() != null ? phoneField.getText().trim() : "";
+
+        if (clientNumber.isEmpty())
+        {
+            return "Номер клієнта є обов'язковим";
+        }
 
         if (firstName.isEmpty()) {
             return "Ім'я є обов'язковим";

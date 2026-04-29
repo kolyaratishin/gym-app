@@ -8,6 +8,7 @@ import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
 import com.gymapp.infrastructure.repository.sqlite.SqliteClientRepository;
 import com.gymapp.infrastructure.util.GymAppUtils;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -41,7 +42,7 @@ public class ClientsController {
     private TableView<Client> clientsTable;
 
     @FXML
-    private TableColumn<Client, Long> idColumn;
+    private TableColumn<Client, Integer> clientNumberColumn;
 
     @FXML
     private TableColumn<Client, String> firstNameColumn;
@@ -58,20 +59,41 @@ public class ClientsController {
     @FXML
     public void initialize() {
         clientsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        idColumn.setCellValueFactory(new PropertyValueFactory<>("id"));
+        clientNumberColumn.setCellValueFactory(new PropertyValueFactory<>("clientNumber"));
         firstNameColumn.setCellValueFactory(new PropertyValueFactory<>("firstName"));
         lastNameColumn.setCellValueFactory(new PropertyValueFactory<>("lastName"));
 
         activeColumn.setCellValueFactory(cellData ->
-                new javafx.beans.property.SimpleStringProperty(
+                new SimpleStringProperty(
                         hasActiveMembership(cellData.getValue().getId())
                                 ? "Активний"
                                 : "Неактивний"
                 )
         );
 
+        activeColumn.setCellFactory(column -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null) {
+                    setText(null);
+                    setStyle("");
+                    return;
+                }
+
+                setText(item);
+
+                if ("Неактивний".equals(item)) {
+                    setStyle("-fx-background-color: #fee2e2; -fx-text-fill: #991b1b; -fx-font-weight: 700;");
+                } else {
+                    setStyle("-fx-background-color: transparent; -fx-text-fill: #166534; -fx-font-weight: 700;");
+                }
+            }
+        });
+
         membershipNameColumn.setCellValueFactory(cellData ->
-                new javafx.beans.property.SimpleStringProperty(
+                new SimpleStringProperty(
                         cellData.getValue() != null
                                 ? resolveMembershipName(cellData.getValue().getId())
                                 : "-"
@@ -94,6 +116,7 @@ public class ClientsController {
     }
 
     private void openClientDetails(Client client) {
+        System.out.println(client);
         if (client == null) {
             return;
         }
@@ -264,6 +287,31 @@ public class ClientsController {
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("Failed to load clients", e);
+        }
+    }
+
+    @FXML
+    private void onAddEmptyClient() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/fxml/client/EmptyClientFormView.fxml")
+            );
+
+            Scene scene = new Scene(loader.load(), 520, 320);
+            scene.getStylesheets().add(
+                    getClass().getResource("/css/app.css").toExternalForm()
+            );
+
+            EmptyClientFormController controller = loader.getController();
+            controller.setOnClientSaved(this::loadClients);
+
+            Stage stage = new Stage();
+            stage.setTitle("Додати пустий номер");
+            stage.setScene(scene);
+            stage.setResizable(false);
+            stage.show();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to open empty client form", e);
         }
     }
 }

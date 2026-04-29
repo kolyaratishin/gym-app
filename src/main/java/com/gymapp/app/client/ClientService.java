@@ -3,6 +3,7 @@ package com.gymapp.app.client;
 import com.gymapp.domain.client.Client;
 import com.gymapp.domain.repository.ClientRepository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,5 +44,19 @@ public class ClientService {
 
     public void update(Client client) {
         clientRepository.update(client);
+    }
+
+    public Client createEmptyClient(Integer clientNumber) {
+        Client client = new Client();
+        client.setClientNumber(clientNumber);
+        client.setFirstName("");
+        client.setLastName("");
+        client.setPhone(null);
+        client.setBirthDate(null);
+        client.setNotes(null);
+        client.setRegistrationDate(LocalDate.now());
+        client.setActive(false);
+
+        return clientRepository.save(client);
     }
 }

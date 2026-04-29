@@ -42,13 +42,17 @@
             <Button text="Деталі"
                     onAction="#onViewDetails"
                     styleClass="button"/>
+
+            <Button text="Додати пустий номер"
+                    onAction="#onAddEmptyClient"
+                    styleClass="button"/>
         </HBox>
     </VBox>
 
     <VBox VBox.vgrow="ALWAYS" styleClass="section-card">
         <TableView fx:id="clientsTable" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="idColumn" text="ID" prefWidth="80"/>
+                <TableColumn fx:id="clientNumberColumn" text="№" prefWidth="80"/>
                 <TableColumn fx:id="firstNameColumn" text="Ім'я" prefWidth="180"/>
                 <TableColumn fx:id="lastNameColumn" text="Прізвище" prefWidth="200"/>
                 <TableColumn fx:id="membershipNameColumn" text="Абонемент" prefWidth="220"/>

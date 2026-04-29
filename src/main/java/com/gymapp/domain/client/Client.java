@@ -5,6 +5,7 @@ import java.time.LocalDate;
 public class Client {
 
     private Long id;
+    private Integer clientNumber;
     private String firstName;
     private String lastName;
     private String phone;
@@ -19,6 +20,14 @@ public class Client {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Integer getClientNumber() {
+        return clientNumber;
+    }
+
+    public void setClientNumber(Integer clientNumber) {
+        this.clientNumber = clientNumber;
     }
 
     public String getFirstName() {
@@ -75,5 +84,20 @@ public class Client {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    @Override
+    public String toString() {
+        return "Client{" +
+                "id=" + id +
+                ", clientNumber=" + clientNumber +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", phone='" + phone + '\'' +
+                ", birthDate=" + birthDate +
+                ", notes='" + notes + '\'' +
+                ", registrationDate=" + registrationDate +
+                ", active=" + active +
+                '}';
     }
 }

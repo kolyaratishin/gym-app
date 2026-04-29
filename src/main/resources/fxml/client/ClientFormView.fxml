@@ -18,23 +18,24 @@
         <Insets top="15" right="15" bottom="15" left="15"/>
     </padding>
 
-    <Label text="Новий клієнт"/>
-
     <GridPane hgap="10" vgap="10">
-        <Label text="Ім'я:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="firstNameField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <Label text="Номер клієнта:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="clientNumberField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-        <Label text="Прізвище:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <TextField fx:id="lastNameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <Label text="Ім'я:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="firstNameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-        <Label text="Телефон:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <TextField fx:id="phoneField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+        <Label text="Прізвище:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="lastNameField" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-        <Label text="Дата народження:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-        <DatePicker fx:id="birthDatePicker" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+        <Label text="Телефон:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="phoneField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-        <Label text="Нотатки:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-        <TextArea fx:id="notesArea" prefRowCount="4" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+        <Label text="Дата народження:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <DatePicker fx:id="birthDatePicker" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <Label text="Нотатки:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <TextArea fx:id="notesArea" prefRowCount="4" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
     </GridPane>
 
     <Label fx:id="errorLabel" text="" style="-fx-text-fill: red;"/>

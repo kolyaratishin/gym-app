@@ -101,11 +101,14 @@ public class ClientDetailsController {
     @FXML
     private Label membershipAlertIndicatorLabel;
 
+    @FXML
+    private Label clientNumberValueLabel;
+
     private Client client;
 
     public void setClient(Client client) {
         this.client = client;
-        idValueLabel.setText(client.getId() != null ? String.valueOf(client.getId()) : "-");
+        idValueLabel.setText(client.getClientNumber() != null ? String.valueOf(client.getClientNumber()) : "-");
         firstNameValueLabel.setText(nullToDash(client.getFirstName()));
         lastNameValueLabel.setText(nullToDash(client.getLastName()));
         phoneValueLabel.setText(nullToDash(client.getPhone()));
