@@ -1,51 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.gymapp.ui.dashboard.DashboardController"
-      spacing="20"
-      styleClass="page-root">
+<ScrollPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.gymapp.ui.dashboard.DashboardController"
+            fitToWidth="true">
 
-    <Label text="Статистика спортзалу" styleClass="page-title"/>
+    <content>
+        <VBox spacing="20" styleClass="page-root">
 
-    <GridPane hgap="20" vgap="20">
+            <Label text="Статистика спортзалу" styleClass="page-title"/>
 
-        <VBox spacing="8"
-              GridPane.rowIndex="0"
-              GridPane.columnIndex="0"
-              styleClass="stat-card">
-            <Label text="Всього клієнтів" styleClass="stat-title"/>
-            <Label fx:id="totalClientsLabel" text="0" styleClass="stat-value"/>
+            <GridPane hgap="20" vgap="20">
+                <VBox spacing="8" GridPane.rowIndex="0" GridPane.columnIndex="0" styleClass="stat-card">
+                    <Label text="Всього клієнтів" styleClass="stat-title"/>
+                    <Label fx:id="totalClientsLabel" text="0" styleClass="stat-value"/>
+                </VBox>
+
+                <VBox spacing="8" GridPane.rowIndex="0" GridPane.columnIndex="1" styleClass="stat-card">
+                    <Label text="Активних клієнтів" styleClass="stat-title"/>
+                    <Label fx:id="activeClientsLabel" text="0" styleClass="stat-value"/>
+                </VBox>
+
+                <VBox spacing="8" GridPane.rowIndex="0" GridPane.columnIndex="2" styleClass="stat-card">
+                    <Label text="Відвідувань сьогодні" styleClass="stat-title"/>
+                    <Label fx:id="visitsTodayLabel" text="0" styleClass="stat-value"/>
+                </VBox>
+
+                <VBox spacing="8" GridPane.rowIndex="0" GridPane.columnIndex="3" styleClass="stat-card">
+                    <Label text="Закінчуються до 7 днів" styleClass="stat-title"/>
+                    <Label fx:id="expiringMembershipsLabel" text="0" styleClass="stat-value"/>
+                </VBox>
+            </GridPane>
+
+            <VBox spacing="12" styleClass="section-card">
+                <Label text="Відвідування за останні 30 днів" styleClass="section-title"/>
+
+                <LineChart fx:id="visitsByDayChart"
+                           prefHeight="320"
+                           animated="false"
+                           legendVisible="false">
+                    <xAxis>
+                        <CategoryAxis label="День"/>
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis label="Відвідування"/>
+                    </yAxis>
+                </LineChart>
+            </VBox>
+
+            <HBox spacing="20">
+                <VBox spacing="12" styleClass="section-card" HBox.hgrow="ALWAYS">
+                    <Label text="Топ клієнтів по відвідуваннях" styleClass="section-title"/>
+
+                    <TableView fx:id="topClientsTable" prefHeight="260">
+                        <columns>
+                            <TableColumn fx:id="topClientNumberColumn" text="№" prefWidth="70"/>
+                            <TableColumn fx:id="topClientNameColumn" text="Клієнт" prefWidth="220"/>
+                            <TableColumn fx:id="topClientVisitsColumn" text="Відвідувань" prefWidth="120"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+
+                <VBox spacing="12" styleClass="section-card" HBox.hgrow="ALWAYS">
+                    <Label text="Активні клієнти без відвідувань" styleClass="section-title"/>
+
+                    <TableView fx:id="noVisitClientsTable" prefHeight="260">
+                        <columns>
+                            <TableColumn fx:id="noVisitClientNumberColumn" text="№" prefWidth="70"/>
+                            <TableColumn fx:id="noVisitClientNameColumn" text="Клієнт" prefWidth="250"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </HBox>
+
         </VBox>
+    </content>
 
-        <VBox spacing="8"
-              GridPane.rowIndex="0"
-              GridPane.columnIndex="1"
-              styleClass="stat-card">
-            <Label text="Активних клієнтів" styleClass="stat-title"/>
-            <Label fx:id="activeClientsLabel" text="0" styleClass="stat-value"/>
-        </VBox>
-
-        <VBox spacing="8"
-              GridPane.rowIndex="1"
-              GridPane.columnIndex="0"
-              styleClass="stat-card">
-            <Label text="Відвідувань сьогодні" styleClass="stat-title"/>
-            <Label fx:id="visitsTodayLabel" text="0" styleClass="stat-value"/>
-        </VBox>
-
-        <VBox spacing="8"
-              GridPane.rowIndex="1"
-              GridPane.columnIndex="1"
-              styleClass="stat-card">
-            <Label text="Закінчуються до 7 днів" styleClass="stat-title"/>
-            <Label fx:id="expiringMembershipsLabel" text="0" styleClass="stat-value"/>
-        </VBox>
-
-    </GridPane>
-
-</VBox>
+</ScrollPane>
