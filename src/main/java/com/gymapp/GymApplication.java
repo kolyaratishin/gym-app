@@ -1,6 +1,6 @@
 package com.gymapp;
 
-import com.gymapp.app.backup.BackupService;
+import com.gymapp.backup.BackupService;
 import com.gymapp.infrastructure.db.FlywayMigrator;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
 import javafx.application.Application;

@@ -1,6 +1,6 @@
 package com.gymapp.ui.common;
 
-import com.gymapp.app.backup.BackupService;
+import com.gymapp.backup.BackupService;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

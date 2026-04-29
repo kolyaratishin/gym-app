@@ -1,12 +1,11 @@
 package com.gymapp.ui.main;
 
-import com.gymapp.app.backup.BackupService;
-import com.gymapp.app.client.ClientCsvService;
-import com.gymapp.app.client.ImportResult;
-import com.gymapp.infrastructure.db.SqliteConnectionFactory;
-import com.gymapp.infrastructure.repository.sqlite.SqliteClientRepository;
-import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipRepository;
-import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipTypeRepository;
+import com.gymapp.backup.BackupService;
+import com.gymapp.client.service.ClientCsvService;
+import com.gymapp.client.dto.ImportResult;
+import com.gymapp.client.db.SqliteClientRepository;
+import com.gymapp.membership.db.SqliteMembershipRepository;
+import com.gymapp.membership.db.SqliteMembershipTypeRepository;
 import com.gymapp.ui.common.ImportResultController;
 import com.gymapp.ui.common.InfoDialogController;
 import com.gymapp.ui.common.RestoreBackupController;
@@ -29,8 +28,8 @@ public class MainController {
     private final com.gymapp.infrastructure.db.ConnectionFactory connectionFactory =
             new com.gymapp.infrastructure.db.SqliteConnectionFactory();
 
-    private final com.gymapp.app.client.ClientCsvService clientCsvService =
-            new com.gymapp.app.client.ClientCsvService(
+    private final ClientCsvService clientCsvService =
+            new ClientCsvService(
                     new SqliteClientRepository(connectionFactory),
                     new SqliteMembershipRepository(connectionFactory),
                     new SqliteMembershipTypeRepository(connectionFactory)

@@ -1,14 +1,18 @@
 package com.gymapp.ui.client;
 
-import com.gymapp.app.client.ClientService;
-import com.gymapp.app.membership.MembershipTypeService;
-import com.gymapp.domain.client.Client;
-import com.gymapp.domain.repository.MembershipRepository;
+import com.gymapp.client.service.ClientService;
+import com.gymapp.membership.db.domain.MembershipType;
+import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.client.db.Client;
+import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
-import com.gymapp.infrastructure.repository.sqlite.SqliteClientRepository;
+import com.gymapp.client.db.SqliteClientRepository;
 import com.gymapp.infrastructure.util.GymAppUtils;
 import java.util.List;
+
+import com.gymapp.membership.db.SqliteMembershipRepository;
+import com.gymapp.membership.db.SqliteMembershipTypeRepository;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -28,9 +32,9 @@ public class ClientsController {
         ConnectionFactory connectionFactory = new SqliteConnectionFactory();
         SqliteClientRepository clientRepository = new SqliteClientRepository(connectionFactory);
         this.clientService = new ClientService(clientRepository);
-        this.membershipRepository = new com.gymapp.infrastructure.repository.sqlite.SqliteMembershipRepository(connectionFactory);
-        this.membershipTypeService = new com.gymapp.app.membership.MembershipTypeService(
-                new com.gymapp.infrastructure.repository.sqlite.SqliteMembershipTypeRepository(connectionFactory)
+        this.membershipRepository = new SqliteMembershipRepository(connectionFactory);
+        this.membershipTypeService = new MembershipTypeService(
+                new SqliteMembershipTypeRepository(connectionFactory)
         );
     }
 
@@ -153,7 +157,7 @@ public class ClientsController {
         try {
             return membershipRepository.findActiveByClientId(clientId)
                     .flatMap(membership -> membershipTypeService.findById(membership.getMembershipTypeId()))
-                    .map(com.gymapp.domain.membership.MembershipType::getName)
+                    .map(MembershipType::getName)
                     .orElse("-");
         } catch (Exception e) {
             e.printStackTrace();

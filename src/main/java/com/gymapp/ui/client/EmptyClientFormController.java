@@ -1,9 +1,9 @@
 package com.gymapp.ui.client;
 
-import com.gymapp.app.client.ClientService;
+import com.gymapp.client.service.ClientService;
 import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
-import com.gymapp.infrastructure.repository.sqlite.SqliteClientRepository;
+import com.gymapp.client.db.SqliteClientRepository;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;

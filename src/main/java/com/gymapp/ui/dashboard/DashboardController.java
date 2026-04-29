@@ -1,16 +1,16 @@
 package com.gymapp.ui.dashboard;
 
-import com.gymapp.app.dashboard.ClientVisitStat;
-import com.gymapp.app.dashboard.DashboardAnalyticsService;
-import com.gymapp.app.dashboard.DashboardService;
-import com.gymapp.app.dashboard.DashboardStats;
-import com.gymapp.app.dashboard.VisitDayStat;
-import com.gymapp.app.membership.MembershipService;
+import com.gymapp.dashboard.dto.ClientVisitStat;
+import com.gymapp.dashboard.service.DashboardAnalyticsService;
+import com.gymapp.dashboard.service.DashboardService;
+import com.gymapp.dashboard.dto.DashboardStats;
+import com.gymapp.dashboard.dto.VisitDayStat;
+import com.gymapp.membership.service.MembershipService;
 import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
-import com.gymapp.infrastructure.repository.sqlite.SqliteClientRepository;
-import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipRepository;
-import com.gymapp.infrastructure.repository.sqlite.SqliteVisitRepository;
+import com.gymapp.client.db.SqliteClientRepository;
+import com.gymapp.membership.db.SqliteMembershipRepository;
+import com.gymapp.visit.db.SqliteVisitRepository;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import javafx.beans.property.SimpleIntegerProperty;

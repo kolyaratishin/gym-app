@@ -1,22 +1,22 @@
 package com.gymapp.ui.client;
 
-import com.gymapp.app.membership.MembershipTypeService;
-import com.gymapp.app.visit.VisitService;
-import com.gymapp.domain.client.Client;
-import com.gymapp.domain.membership.Membership;
-import com.gymapp.domain.membership.MembershipType;
-import com.gymapp.domain.repository.MembershipRepository;
-import com.gymapp.domain.repository.VisitRepository;
+import com.gymapp.visit.service.VisitService;
+import com.gymapp.client.db.Client;
+import com.gymapp.membership.db.*;
+import com.gymapp.membership.db.MembershipRepository;
+import com.gymapp.visit.db.VisitRepository;
 import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
-import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipRepository;
-import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipTypeRepository;
-import com.gymapp.infrastructure.repository.sqlite.SqliteVisitRepository;
+import com.gymapp.visit.db.SqliteVisitRepository;
 import com.gymapp.infrastructure.util.GymAppUtils;
+import com.gymapp.membership.db.domain.Membership;
+import com.gymapp.membership.db.domain.MembershipStatus;
+import com.gymapp.membership.db.domain.MembershipType;
+import com.gymapp.membership.db.domain.VisitPolicy;
+import com.gymapp.membership.service.MembershipTypeService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
@@ -37,8 +37,8 @@ public class ClientDetailsController {
         this.membershipTypeService = new MembershipTypeService(
                 new SqliteMembershipTypeRepository(connectionFactory)
         );
-        this.visitService = new com.gymapp.app.visit.VisitService(
-                new com.gymapp.infrastructure.repository.sqlite.SqliteVisitRepository(connectionFactory),
+        this.visitService = new VisitService(
+                new SqliteVisitRepository(connectionFactory),
                 new SqliteMembershipRepository(connectionFactory),
                 new MembershipTypeService(new SqliteMembershipTypeRepository(connectionFactory))
         );
@@ -192,12 +192,12 @@ public class ClientDetailsController {
             return;
         }
 
-        if (membership.getStatus() == com.gymapp.domain.membership.MembershipStatus.EXPIRED) {
+        if (membership.getStatus() == MembershipStatus.EXPIRED) {
             applyBadgeStyle(membershipAlertIndicatorLabel, "✖ Прострочений", "status-pill-danger");
             return;
         }
 
-        if (membershipType.getVisitPolicy() == com.gymapp.domain.membership.VisitPolicy.LIMITED_BY_VISITS) {
+        if (membershipType.getVisitPolicy() == VisitPolicy.LIMITED_BY_VISITS) {
             Integer remaining = membership.getRemainingVisits();
 
             if (remaining == null || remaining <= 0) {
@@ -233,7 +233,7 @@ public class ClientDetailsController {
         }
     }
 
-    private String formatMembershipStatus(com.gymapp.domain.membership.MembershipStatus status) {
+    private String formatMembershipStatus(MembershipStatus status) {
         return switch (status) {
             case ACTIVE -> "Активний";
             case EXPIRED -> "Прострочений";
@@ -242,7 +242,7 @@ public class ClientDetailsController {
         };
     }
 
-    private String formatVisitPolicy(com.gymapp.domain.membership.VisitPolicy visitPolicy) {
+    private String formatVisitPolicy(VisitPolicy visitPolicy) {
         return switch (visitPolicy) {
             case UNLIMITED -> "Безлімітний";
             case LIMITED_BY_VISITS -> "За кількістю відвідувань";

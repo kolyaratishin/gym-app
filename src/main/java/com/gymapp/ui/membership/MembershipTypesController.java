@@ -1,10 +1,10 @@
 package com.gymapp.ui.membership;
 
-import com.gymapp.app.membership.MembershipTypeService;
-import com.gymapp.domain.membership.MembershipType;
+import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
-import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipTypeRepository;
+import com.gymapp.membership.db.SqliteMembershipTypeRepository;
 import com.gymapp.infrastructure.util.GymAppUtils;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;

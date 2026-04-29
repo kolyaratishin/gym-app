@@ -1,16 +1,16 @@
 package com.gymapp.ui.client;
 
-import com.gymapp.app.membership.MembershipService;
-import com.gymapp.app.membership.MembershipTypeService;
-import com.gymapp.domain.client.Client;
-import com.gymapp.domain.membership.Membership;
-import com.gymapp.domain.membership.MembershipType;
-import com.gymapp.domain.membership.MembershipStatus;
-import com.gymapp.domain.membership.VisitPolicy;
+import com.gymapp.membership.service.MembershipService;
+import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.client.db.Client;
+import com.gymapp.membership.db.domain.Membership;
+import com.gymapp.membership.db.domain.MembershipType;
+import com.gymapp.membership.db.domain.MembershipStatus;
+import com.gymapp.membership.db.domain.VisitPolicy;
 import com.gymapp.infrastructure.db.ConnectionFactory;
 import com.gymapp.infrastructure.db.SqliteConnectionFactory;
-import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipRepository;
-import com.gymapp.infrastructure.repository.sqlite.SqliteMembershipTypeRepository;
+import com.gymapp.membership.db.SqliteMembershipRepository;
+import com.gymapp.membership.db.SqliteMembershipTypeRepository;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;

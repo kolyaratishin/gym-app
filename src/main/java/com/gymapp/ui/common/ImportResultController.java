@@ -1,6 +1,6 @@
 package com.gymapp.ui.common;
 
-import com.gymapp.app.client.ImportResult;
+import com.gymapp.client.dto.ImportResult;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
