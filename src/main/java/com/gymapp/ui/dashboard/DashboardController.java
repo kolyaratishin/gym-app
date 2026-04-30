@@ -1,5 +1,6 @@
 package com.gymapp.ui.dashboard;
 
+import com.gymapp.dashboard.db.DashboardAnalyticsRepository;
 import com.gymapp.dashboard.dto.ClientVisitStat;
 import com.gymapp.dashboard.service.DashboardAnalyticsService;
 import com.gymapp.dashboard.service.DashboardService;
@@ -52,6 +53,7 @@ public class DashboardController {
         SqliteClientRepository clientRepository = new SqliteClientRepository(connectionFactory);
         SqliteVisitRepository visitRepository = new SqliteVisitRepository(connectionFactory);
         SqliteMembershipRepository membershipRepository = new SqliteMembershipRepository(connectionFactory);
+        DashboardAnalyticsRepository dashboardAnalyticsRepository = new DashboardAnalyticsRepository(connectionFactory);
 
         this.dashboardService = new DashboardService(
                 clientRepository,
@@ -59,7 +61,7 @@ public class DashboardController {
                 membershipRepository
         );
 
-        this.dashboardAnalyticsService = new DashboardAnalyticsService(connectionFactory);
+        this.dashboardAnalyticsService = new DashboardAnalyticsService(dashboardAnalyticsRepository);
 
         this.membershipService = new MembershipService(membershipRepository);
     }

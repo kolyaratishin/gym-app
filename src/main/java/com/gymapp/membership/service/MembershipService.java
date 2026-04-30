@@ -22,50 +22,12 @@ public class MembershipService {
     }
 
     public Membership createMembership(Long clientId, MembershipType membershipType, LocalDate startDate) {
-        Membership membership = buildMembership(clientId, membershipType, startDate);
-        return membershipRepository.save(membership);
+        return saveNewMembership(clientId, membershipType, startDate, null, null);
     }
 
     public Membership replaceMembership(Long clientId, MembershipType membershipType, LocalDate startDate) {
         membershipRepository.deactivateActiveByClientId(clientId);
-
-        Membership membership = buildMembership(clientId, membershipType, startDate);
-        return membershipRepository.save(membership);
-    }
-
-    private Membership buildMembership(Long clientId, MembershipType membershipType, LocalDate startDate) {
-        Membership membership = new Membership();
-        membership.setClientId(clientId);
-        membership.setMembershipTypeId(membershipType.getId());
-        membership.setStartDate(startDate);
-        membership.setStatus(MembershipStatus.ACTIVE);
-
-        VisitPolicy visitPolicy = membershipType.getVisitPolicy();
-
-        switch (visitPolicy) {
-            case LIMITED_BY_VISITS -> {
-                membership.setEndDate(
-                        membershipType.getDurationDays() != null
-                                ? startDate.plusDays(membershipType.getDurationDays())
-                                : null
-                );
-                membership.setRemainingVisits(membershipType.getVisitLimit());
-            }
-            case LIMITED_BY_TIME, UNLIMITED -> {
-                membership.setEndDate(
-                        membershipType.getDurationDays() != null
-                                ? startDate.plusDays(membershipType.getDurationDays())
-                                : null
-                );
-                membership.setRemainingVisits(null);
-            }
-        }
-
-        return membership;
-    }
-
-    public void expireOutdatedMemberships() {
-        membershipRepository.expireOutdatedMemberships(LocalDate.now());
+        return createMembership(clientId, membershipType, startDate);
     }
 
     public Membership createManualMembership(
@@ -75,15 +37,7 @@ public class MembershipService {
             LocalDate endDate,
             Integer remainingVisits
     ) {
-        Membership membership = buildManualMembership(
-                clientId,
-                membershipType,
-                startDate,
-                endDate,
-                remainingVisits
-        );
-
-        return membershipRepository.save(membership);
+        return saveNewMembership(clientId, membershipType, startDate, endDate, remainingVisits);
     }
 
     public Membership replaceWithManualMembership(
@@ -94,45 +48,88 @@ public class MembershipService {
             Integer remainingVisits
     ) {
         membershipRepository.deactivateActiveByClientId(clientId);
+        return createManualMembership(clientId, membershipType, startDate, endDate, remainingVisits);
+    }
 
-        Membership membership = buildManualMembership(
+    public void expireOutdatedMemberships() {
+        membershipRepository.expireOutdatedMemberships(LocalDate.now());
+    }
+
+    private Membership saveNewMembership(
+            Long clientId,
+            MembershipType membershipType,
+            LocalDate startDate,
+            LocalDate customEndDate,
+            Integer customRemainingVisits
+    ) {
+        Membership membership = buildMembership(
                 clientId,
                 membershipType,
                 startDate,
-                endDate,
-                remainingVisits
+                customEndDate,
+                customRemainingVisits
         );
 
         return membershipRepository.save(membership);
     }
 
-    private Membership buildManualMembership(
+    private Membership buildMembership(
             Long clientId,
             MembershipType membershipType,
             LocalDate startDate,
-            LocalDate endDate,
-            Integer remainingVisits
+            LocalDate customEndDate,
+            Integer customRemainingVisits
     ) {
         Membership membership = new Membership();
+
         membership.setClientId(clientId);
         membership.setMembershipTypeId(membershipType.getId());
         membership.setStartDate(startDate);
-        membership.setEndDate(endDate);
-
-        if (membershipType.getVisitPolicy() == VisitPolicy.LIMITED_BY_VISITS) {
-            membership.setRemainingVisits(remainingVisits);
-        } else {
-            membership.setRemainingVisits(null);
-        }
-
-        if (endDate != null && endDate.isBefore(LocalDate.now())) {
-            membership.setStatus(MembershipStatus.EXPIRED);
-        } else if (remainingVisits != null && remainingVisits <= 0) {
-            membership.setStatus(MembershipStatus.EXPIRED);
-        } else {
-            membership.setStatus(MembershipStatus.ACTIVE);
-        }
+        membership.setEndDate(resolveEndDate(membershipType, startDate, customEndDate));
+        membership.setRemainingVisits(resolveRemainingVisits(membershipType, customRemainingVisits));
+        membership.setStatus(resolveStatus(membership.getEndDate(), membership.getRemainingVisits()));
 
         return membership;
+    }
+
+    private LocalDate resolveEndDate(
+            MembershipType membershipType,
+            LocalDate startDate,
+            LocalDate customEndDate
+    ) {
+        if (customEndDate != null) {
+            return customEndDate;
+        }
+
+        Integer durationDays = membershipType.getDurationDays();
+
+        return durationDays != null
+                ? startDate.plusDays(durationDays)
+                : null;
+    }
+
+    private Integer resolveRemainingVisits(
+            MembershipType membershipType,
+            Integer customRemainingVisits
+    ) {
+        if (membershipType.getVisitPolicy() != VisitPolicy.LIMITED_BY_VISITS) {
+            return null;
+        }
+
+        return customRemainingVisits != null
+                ? customRemainingVisits
+                : membershipType.getVisitLimit();
+    }
+
+    private MembershipStatus resolveStatus(LocalDate endDate, Integer remainingVisits) {
+        if (endDate != null && endDate.isBefore(LocalDate.now())) {
+            return MembershipStatus.EXPIRED;
+        }
+
+        if (remainingVisits != null && remainingVisits <= 0) {
+            return MembershipStatus.EXPIRED;
+        }
+
+        return MembershipStatus.ACTIVE;
     }
 }
