@@ -8,6 +8,7 @@ import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.db.ConnectionFactory;
 import com.gymapp.db.SqliteConnectionFactory;
 import com.gymapp.client.db.SqliteClientRepository;
+import com.gymapp.ui.client.details.ClientDetailsController;
 import com.gymapp.util.GymAppUtils;
 import java.util.List;
 
