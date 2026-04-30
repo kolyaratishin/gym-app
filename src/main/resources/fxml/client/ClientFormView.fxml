@@ -12,7 +12,7 @@
 
 <VBox spacing="10"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.gymapp.ui.client.ClientFormController">
+      fx:controller="com.gymapp.ui.client.form.ClientFormController">
 
     <padding>
         <Insets top="15" right="15" bottom="15" left="15"/>
@@ -41,7 +41,7 @@
     <Label fx:id="errorLabel" text="" style="-fx-text-fill: red;"/>
 
     <HBox spacing="10">
-        <Button text="Зберегти" onAction="#onSave"/>
+        <Button text="Зберегти" onAction="#onSave" styleClass="button,primary-button"/>
         <Button text="Скасувати" onAction="#onCancel"/>
     </HBox>
 

@@ -10,7 +10,7 @@
 
 <VBox spacing="18"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.gymapp.ui.client.EmptyClientFormController"
+      fx:controller="com.gymapp.ui.client.empty.EmptyClientFormController"
       styleClass="page-root">
 
     <padding>

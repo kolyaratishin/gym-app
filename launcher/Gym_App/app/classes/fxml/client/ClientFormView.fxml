@@ -12,7 +12,7 @@
 
 <VBox spacing="10"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.gymapp.ui.client.ClientFormController">
+      fx:controller="com.gymapp.ui.client.form.ClientFormController">
 
     <padding>
         <Insets top="15" right="15" bottom="15" left="15"/>

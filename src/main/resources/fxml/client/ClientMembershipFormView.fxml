@@ -16,7 +16,7 @@
 <?import javafx.scene.control.CheckBox?>
 <VBox spacing="20"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.gymapp.ui.client.ClientMembershipFormController"
+      fx:controller="com.gymapp.ui.client.mebmership.ClientMembershipFormController"
       styleClass="page-root">
 
     <padding>

@@ -5,7 +5,7 @@ import com.gymapp.context.AppContext;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.service.MembershipTypeService;
-import com.gymapp.ui.client.ClientMembershipFormController;
+import com.gymapp.ui.client.mebmership.ClientMembershipFormController;
 import com.gymapp.ui.common.ConfirmDialogController;
 import com.gymapp.ui.common.InfoDialogController;
 import com.gymapp.ui.common.ViewLoader;
