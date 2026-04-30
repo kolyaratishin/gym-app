@@ -1,4 +1,4 @@
-package com.gymapp.infrastructure.util;
+package com.gymapp.util;
 
 import javafx.stage.Stage;
 

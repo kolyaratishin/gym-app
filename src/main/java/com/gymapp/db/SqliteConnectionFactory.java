@@ -1,4 +1,4 @@
-package com.gymapp.infrastructure.db;
+package com.gymapp.db;
 
 import java.net.URISyntaxException;
 import java.nio.file.Files;

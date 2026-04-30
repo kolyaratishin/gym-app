@@ -1,4 +1,4 @@
-package com.gymapp.infrastructure.db;
+package com.gymapp.db;
 
 import java.sql.Connection;
 import java.sql.SQLException;

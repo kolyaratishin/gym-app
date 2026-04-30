@@ -2,8 +2,8 @@ package com.gymapp.ui.client;
 
 import com.gymapp.client.service.ClientService;
 import com.gymapp.client.db.Client;
-import com.gymapp.infrastructure.db.ConnectionFactory;
-import com.gymapp.infrastructure.db.SqliteConnectionFactory;
+import com.gymapp.db.ConnectionFactory;
+import com.gymapp.db.SqliteConnectionFactory;
 import com.gymapp.client.db.SqliteClientRepository;
 import java.time.LocalDate;
 import javafx.fxml.FXML;

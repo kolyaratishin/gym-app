@@ -25,8 +25,8 @@ import javafx.stage.Window;
 public class MainController {
 
     private final BackupService backupService = new BackupService();
-    private final com.gymapp.infrastructure.db.ConnectionFactory connectionFactory =
-            new com.gymapp.infrastructure.db.SqliteConnectionFactory();
+    private final com.gymapp.db.ConnectionFactory connectionFactory =
+            new com.gymapp.db.SqliteConnectionFactory();
 
     private final ClientCsvService clientCsvService =
             new ClientCsvService(

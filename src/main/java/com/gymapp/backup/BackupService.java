@@ -1,6 +1,6 @@
 package com.gymapp.backup;
 
-import com.gymapp.infrastructure.db.SqliteConnectionFactory;
+import com.gymapp.db.SqliteConnectionFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;

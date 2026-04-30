@@ -1,130 +1,58 @@
 package com.gymapp.client.db;
 
-import com.gymapp.infrastructure.db.ConnectionFactory;
+import com.gymapp.db.BaseRepository;
+import com.gymapp.db.ConnectionFactory;
 
-import java.sql.*;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class SqliteClientRepository implements ClientRepository {
-
-    private final ConnectionFactory connectionFactory;
-
+public class SqliteClientRepository extends BaseRepository implements ClientRepository {
     public SqliteClientRepository(ConnectionFactory connectionFactory) {
-        this.connectionFactory = connectionFactory;
+        super(connectionFactory);
     }
 
     @Override
     public Client save(Client client) {
         String sql = """
                 INSERT INTO clients (
-                    client_number,
-                    first_name,
-                    last_name,
-                    phone,
-                    birth_date,
-                    notes,
-                    registration_date,
-                    active
+                    client_number, first_name, last_name, phone,
+                    birth_date, notes, registration_date, active
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        long id = insertAndReturnId(sql, ps -> {
+            setClientFields(client, ps);
+        });
 
-            setIntegerOrNull(statement, 1, client.getClientNumber());
-            statement.setString(2, client.getFirstName());
-            statement.setString(3, client.getLastName());
-            statement.setString(4, client.getPhone());
-            statement.setString(5, client.getBirthDate() != null ? client.getBirthDate().toString() : null);
-            statement.setString(6, client.getNotes());
-            statement.setString(7, client.getRegistrationDate() != null ? client.getRegistrationDate().toString() : null);
-            statement.setInt(8, client.isActive() ? 1 : 0);
-
-            statement.executeUpdate();
-
-            try (ResultSet keys = statement.getGeneratedKeys()) {
-                if (keys.next()) {
-                    client.setId(keys.getLong(1));
-                }
-            }
-
-            return client;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to save client", e);
-        }
+        client.setId(id);
+        return client;
     }
 
-    @Override
     public Optional<Client> findById(Long id) {
-        String sql = """
-                SELECT
-                    id,
-                    client_number,
-                    first_name,
-                    last_name,
-                    phone,
-                    birth_date,
-                    notes,
-                    registration_date,
-                    active
-                FROM clients
-                WHERE id = ?
-                """;
+        String sql = "SELECT * FROM clients WHERE id = ?";
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        List<Client> result = query(sql,
+                ps -> ps.setLong(1, id),
+                this::mapClient
+        );
 
-            statement.setLong(1, id);
-
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapClient(rs));
-                }
-            }
-
-            return Optional.empty();
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find client by id: " + id, e);
-        }
+        return result.stream().findFirst();
     }
 
-    @Override
     public List<Client> findAll() {
         String sql = """
-                SELECT
-                    id,
-                    client_number,
-                    first_name,
-                    last_name,
-                    phone,
-                    birth_date,
-                    notes,
-                    registration_date,
-                    active
-                FROM clients
+                SELECT * FROM clients
                 ORDER BY
                     CASE WHEN client_number IS NULL THEN 1 ELSE 0 END,
                     client_number,
                     id
                 """;
 
-        List<Client> result = new ArrayList<>();
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet rs = statement.executeQuery()) {
-
-            while (rs.next()) {
-                result.add(mapClient(rs));
-            }
-
-            return result;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all clients", e);
-        }
+        return query(sql, null, this::mapClient);
     }
 
     @Override
@@ -133,32 +61,22 @@ public class SqliteClientRepository implements ClientRepository {
             return findAll();
         }
 
-        String trimmedQuery = query.trim();
+        String trimmed = query.trim();
 
-        if (isLong(trimmedQuery)) {
-            Optional<Client> clientById = findById(Long.parseLong(trimmedQuery));
-            if (clientById.isPresent()) {
-                return List.of(clientById.get());
+        if (isLong(trimmed)) {
+            Optional<Client> byId = findById(Long.parseLong(trimmed));
+            if (byId.isPresent()) {
+                return List.of(byId.get());
             }
 
-            List<Client> byClientNumber = findByClientNumber(Integer.parseInt(trimmedQuery));
-            if (!byClientNumber.isEmpty()) {
-                return byClientNumber;
+            List<Client> byNumber = findByClientNumber(Integer.parseInt(trimmed));
+            if (!byNumber.isEmpty()) {
+                return byNumber;
             }
         }
 
         String sql = """
-                SELECT
-                    id,
-                    client_number,
-                    first_name,
-                    last_name,
-                    phone,
-                    birth_date,
-                    notes,
-                    registration_date,
-                    active
-                FROM clients
+                SELECT * FROM clients
                 WHERE LOWER(COALESCE(first_name, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(last_name, '')) LIKE LOWER(?)
                    OR LOWER(COALESCE(phone, '')) LIKE LOWER(?)
@@ -168,180 +86,91 @@ public class SqliteClientRepository implements ClientRepository {
                     id
                 """;
 
-        List<Client> result = new ArrayList<>();
-        String pattern = "%" + trimmedQuery + "%";
+        String pattern = "%" + trimmed + "%";
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, pattern);
-            statement.setString(2, pattern);
-            statement.setString(3, pattern);
-
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    result.add(mapClient(rs));
-                }
-            }
-
-            return result;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to search clients by query: " + query, e);
-        }
+        return query(sql,
+                ps -> {
+                    ps.setString(1, pattern);
+                    ps.setString(2, pattern);
+                    ps.setString(3, pattern);
+                },
+                this::mapClient
+        );
     }
 
     @Override
     public void update(Client client) {
         String sql = """
                 UPDATE clients
-                SET
-                    client_number = ?,
-                    first_name = ?,
-                    last_name = ?,
-                    phone = ?,
-                    birth_date = ?,
-                    notes = ?,
-                    registration_date = ?,
-                    active = ?
+                SET client_number = ?, first_name = ?, last_name = ?, phone = ?,
+                    birth_date = ?, notes = ?, registration_date = ?, active = ?
                 WHERE id = ?
                 """;
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        int updated = update(sql, ps -> {
+            setClientFields(client, ps);
+            ps.setLong(9, client.getId());
+        });
 
-            setIntegerOrNull(statement, 1, client.getClientNumber());
-            statement.setString(2, client.getFirstName());
-            statement.setString(3, client.getLastName());
-            statement.setString(4, client.getPhone());
-            statement.setString(5, client.getBirthDate() != null ? client.getBirthDate().toString() : null);
-            statement.setString(6, client.getNotes());
-            statement.setString(7, client.getRegistrationDate() != null ? client.getRegistrationDate().toString() : null);
-            statement.setInt(8, client.isActive() ? 1 : 0);
-            statement.setLong(9, client.getId());
-
-            int updatedRows = statement.executeUpdate();
-            if (updatedRows == 0) {
-                throw new RuntimeException("Client not found for update, id = " + client.getId());
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to update client, id = " + client.getId(), e);
+        if (updated == 0) {
+            throw new RuntimeException("Client not found: " + client.getId());
         }
+    }
+
+    private void setClientFields(Client client, PreparedStatement ps) throws SQLException {
+        setIntegerOrNull(ps, 1, client.getClientNumber());
+        ps.setString(2, client.getFirstName());
+        ps.setString(3, client.getLastName());
+        ps.setString(4, client.getPhone());
+        ps.setString(5, toString(client.getBirthDate()));
+        ps.setString(6, client.getNotes());
+        ps.setString(7, toString(client.getRegistrationDate()));
+        ps.setInt(8, client.isActive() ? 1 : 0);
     }
 
     @Override
     public void deactivate(Long id) {
-        String sql = """
-                UPDATE clients
-                SET active = 0
-                WHERE id = ?
-                """;
+        String sql = "UPDATE clients SET active = 0 WHERE id = ?";
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        int updated = update(sql, ps -> ps.setLong(1, id));
 
-            statement.setLong(1, id);
-
-            int updatedRows = statement.executeUpdate();
-            if (updatedRows == 0) {
-                throw new RuntimeException("Client not found for deactivate, id = " + id);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to deactivate client, id = " + id, e);
+        if (updated == 0) {
+            throw new RuntimeException("Client not found: " + id);
         }
     }
 
     @Override
     public void reactivate(Long id) {
-        String sql = """
-                UPDATE clients
-                SET active = 1
-                WHERE id = ?
-                """;
+        String sql = "UPDATE clients SET active = 1 WHERE id = ?";
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        int updated = update(sql, ps -> ps.setLong(1, id));
 
-            statement.setLong(1, id);
-
-            int updatedRows = statement.executeUpdate();
-            if (updatedRows == 0) {
-                throw new RuntimeException("Client not found for reactivate, id = " + id);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to reactivate client, id = " + id, e);
+        if (updated == 0) {
+            throw new RuntimeException("Client not found: " + id);
         }
     }
 
     @Override
     public long countAll() {
-        String sql = "SELECT COUNT(*) FROM clients";
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet rs = statement.executeQuery()) {
-
-            if (rs.next()) {
-                return rs.getLong(1);
-            }
-
-            return 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to count all clients", e);
-        }
+        return queryForLong("SELECT COUNT(*) FROM clients", null);
     }
 
     @Override
     public long countActive() {
-        String sql = "SELECT COUNT(*) FROM clients WHERE active = 1";
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet rs = statement.executeQuery()) {
-
-            if (rs.next()) {
-                return rs.getLong(1);
-            }
-
-            return 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to count active clients", e);
-        }
+        return queryForLong("SELECT COUNT(*) FROM clients WHERE active = 1", null);
     }
 
     private List<Client> findByClientNumber(Integer clientNumber) {
         String sql = """
-                SELECT
-                    id,
-                    client_number,
-                    first_name,
-                    last_name,
-                    phone,
-                    birth_date,
-                    notes,
-                    registration_date,
-                    active
-                FROM clients
-                WHERE client_number = ?
-                ORDER BY id
-                """;
+        SELECT * FROM clients
+        WHERE client_number = ?
+        ORDER BY id
+        """;
 
-        List<Client> result = new ArrayList<>();
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setInt(1, clientNumber);
-
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    result.add(mapClient(rs));
-                }
-            }
-
-            return result;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find client by client number: " + clientNumber, e);
-        }
+        return query(sql,
+                ps -> ps.setInt(1, clientNumber),
+                this::mapClient
+        );
     }
 
     private Client mapClient(ResultSet rs) throws SQLException {
@@ -366,17 +195,16 @@ public class SqliteClientRepository implements ClientRepository {
         return client;
     }
 
-    private void setIntegerOrNull(PreparedStatement statement, int index, Integer value) throws SQLException {
-        if (value == null) {
-            statement.setNull(index, Types.INTEGER);
-        } else {
-            statement.setInt(index, value);
-        }
-    }
+    @Override
+    public boolean existsByClientNumber(Integer clientNumber) {
+        String sql = "SELECT 1 FROM clients WHERE client_number = ? LIMIT 1";
 
-    private Integer getIntegerOrNull(ResultSet rs, String columnName) throws SQLException {
-        int value = rs.getInt(columnName);
-        return rs.wasNull() ? null : value;
+        List<Integer> result = query(sql,
+                ps -> ps.setInt(1, clientNumber),
+                rs -> rs.getInt(1)
+        );
+
+        return !result.isEmpty();
     }
 
     private boolean isLong(String value) {
@@ -385,28 +213,6 @@ public class SqliteClientRepository implements ClientRepository {
             return true;
         } catch (NumberFormatException e) {
             return false;
-        }
-    }
-
-    @Override
-    public boolean existsByClientNumber(Integer clientNumber) {
-        String sql = """
-            SELECT 1
-            FROM clients
-            WHERE client_number = ?
-            LIMIT 1
-            """;
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setInt(1, clientNumber);
-
-            try (ResultSet rs = statement.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to check client number: " + clientNumber, e);
         }
     }
 }

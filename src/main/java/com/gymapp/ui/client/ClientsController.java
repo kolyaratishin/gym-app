@@ -5,10 +5,10 @@ import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.client.db.Client;
 import com.gymapp.membership.db.MembershipRepository;
-import com.gymapp.infrastructure.db.ConnectionFactory;
-import com.gymapp.infrastructure.db.SqliteConnectionFactory;
+import com.gymapp.db.ConnectionFactory;
+import com.gymapp.db.SqliteConnectionFactory;
 import com.gymapp.client.db.SqliteClientRepository;
-import com.gymapp.infrastructure.util.GymAppUtils;
+import com.gymapp.util.GymAppUtils;
 import java.util.List;
 
 import com.gymapp.membership.db.SqliteMembershipRepository;

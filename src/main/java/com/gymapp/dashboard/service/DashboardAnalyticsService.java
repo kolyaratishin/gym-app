@@ -2,7 +2,7 @@ package com.gymapp.dashboard.service;
 
 import com.gymapp.dashboard.dto.ClientVisitStat;
 import com.gymapp.dashboard.dto.VisitDayStat;
-import com.gymapp.infrastructure.db.ConnectionFactory;
+import com.gymapp.db.ConnectionFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

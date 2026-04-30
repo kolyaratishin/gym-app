@@ -1,427 +1,237 @@
 package com.gymapp.membership.db;
 
-import com.gymapp.infrastructure.db.ConnectionFactory;
+import com.gymapp.db.BaseRepository;
+import com.gymapp.db.ConnectionFactory;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class SqliteMembershipRepository implements MembershipRepository {
-
-    private final ConnectionFactory connectionFactory;
+public class SqliteMembershipRepository extends BaseRepository implements MembershipRepository {
 
     public SqliteMembershipRepository(ConnectionFactory connectionFactory) {
-        this.connectionFactory = connectionFactory;
+        super(connectionFactory);
     }
 
     @Override
-    public Membership save(Membership membership) {
+    public Membership save(Membership m) {
         String sql = """
-                INSERT INTO memberships (
-                    client_id,
-                    membership_type_id,
-                    start_date,
-                    end_date,
-                    remaining_visits,
-                    status
-                ) VALUES (?, ?, ?, ?, ?, ?)
-                """;
+            INSERT INTO memberships (
+                client_id, membership_type_id, start_date,
+                end_date, remaining_visits, status
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """;
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        long id = insertAndReturnId(sql, ps -> {
+            ps.setLong(1, m.getClientId());
+            ps.setLong(2, m.getMembershipTypeId());
+            ps.setString(3, m.getStartDate().toString());
+            ps.setString(4, toString(m.getEndDate()));
 
-            statement.setLong(1, membership.getClientId());
-            statement.setLong(2, membership.getMembershipTypeId());
-            statement.setString(3, membership.getStartDate().toString());
-            statement.setString(4, membership.getEndDate() != null ? membership.getEndDate().toString() : null);
-
-            if (membership.getRemainingVisits() != null) {
-                statement.setInt(5, membership.getRemainingVisits());
+            if (m.getRemainingVisits() != null) {
+                ps.setInt(5, m.getRemainingVisits());
             } else {
-                statement.setNull(5, Types.INTEGER);
+                ps.setNull(5, Types.INTEGER);
             }
 
-            statement.setString(6, membership.getStatus().name());
+            ps.setString(6, m.getStatus().name());
+        });
 
-            statement.executeUpdate();
-
-            try (ResultSet keys = statement.getGeneratedKeys()) {
-                if (keys.next()) {
-                    membership.setId(keys.getLong(1));
-                }
-            }
-
-            return membership;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to save membership", e);
-        }
+        m.setId(id);
+        return m;
     }
 
     @Override
     public Optional<Membership> findById(Long id) {
-        String sql = """
-                SELECT
-                    id,
-                    client_id,
-                    membership_type_id,
-                    start_date,
-                    end_date,
-                    remaining_visits,
-                    status
-                FROM memberships
-                WHERE id = ?
-                """;
+        String sql = "SELECT * FROM memberships WHERE id = ?";
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setLong(1, id);
-
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapMembership(rs));
-                }
-            }
-
-            return Optional.empty();
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find membership by id: " + id, e);
-        }
+        return query(sql,
+                ps -> ps.setLong(1, id),
+                this::mapMembership
+        ).stream().findFirst();
     }
 
     @Override
     public List<Membership> findAll() {
-        String sql = """
-                SELECT
-                    id,
-                    client_id,
-                    membership_type_id,
-                    start_date,
-                    end_date,
-                    remaining_visits,
-                    status
-                FROM memberships
-                ORDER BY id
-                """;
-
-        List<Membership> memberships = new ArrayList<>();
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet rs = statement.executeQuery()) {
-
-            while (rs.next()) {
-                memberships.add(mapMembership(rs));
-            }
-
-            return memberships;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all memberships", e);
-        }
+        return query(
+                "SELECT * FROM memberships ORDER BY id",
+                null,
+                this::mapMembership
+        );
     }
 
     @Override
     public List<Membership> findByClientId(Long clientId) {
         String sql = """
-                SELECT
-                    id,
-                    client_id,
-                    membership_type_id,
-                    start_date,
-                    end_date,
-                    remaining_visits,
-                    status
-                FROM memberships
-                WHERE client_id = ?
-                ORDER BY id DESC
-                """;
+            SELECT * FROM memberships
+            WHERE client_id = ?
+            ORDER BY id DESC
+            """;
 
-        List<Membership> memberships = new ArrayList<>();
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setLong(1, clientId);
-
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    memberships.add(mapMembership(rs));
-                }
-            }
-
-            return memberships;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find memberships by client id: " + clientId, e);
-        }
+        return query(sql,
+                ps -> ps.setLong(1, clientId),
+                this::mapMembership
+        );
     }
 
     @Override
     public List<Membership> findByStatus(MembershipStatus status) {
         String sql = """
-            SELECT
-                id,
-                client_id,
-                membership_type_id,
-                start_date,
-                end_date,
-                remaining_visits,
-                status
-            FROM memberships
+            SELECT * FROM memberships
             WHERE status = ?
             ORDER BY id DESC
             """;
 
-        List<Membership> result = new ArrayList<>();
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, status.name());
-
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    result.add(mapMembership(rs));
-                }
-            }
-
-            return result;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find memberships by status: " + status, e);
-        }
+        return query(sql,
+                ps -> ps.setString(1, status.name()),
+                this::mapMembership
+        );
     }
 
     @Override
     public List<Membership> findExpiringUntil(LocalDate date) {
         String sql = """
-            SELECT
-                id,
-                client_id,
-                membership_type_id,
-                start_date,
-                end_date,
-                remaining_visits,
-                status
-            FROM memberships
-            WHERE
-                end_date IS NOT NULL
-                AND end_date <= ?
-                AND status = ?
+            SELECT * FROM memberships
+            WHERE end_date IS NOT NULL
+              AND end_date <= ?
+              AND status = ?
             ORDER BY end_date
             """;
 
-        List<Membership> result = new ArrayList<>();
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, date.toString());
-            statement.setString(2, MembershipStatus.ACTIVE.name());
-
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    result.add(mapMembership(rs));
-                }
-            }
-
-            return result;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find expiring memberships until: " + date, e);
-        }
+        return query(sql,
+                ps -> {
+                    ps.setString(1, date.toString());
+                    ps.setString(2, MembershipStatus.ACTIVE.name());
+                },
+                this::mapMembership
+        );
     }
 
     @Override
     public Optional<Membership> findActiveByClientId(Long clientId) {
         String sql = """
-                SELECT
-                    id,
-                    client_id,
-                    membership_type_id,
-                    start_date,
-                    end_date,
-                    remaining_visits,
-                    status
-                FROM memberships
-                WHERE client_id = ?
-                  AND status = ?
-                ORDER BY id DESC
-                LIMIT 1
-                """;
+            SELECT * FROM memberships
+            WHERE client_id = ?
+              AND status = ?
+            ORDER BY id DESC
+            LIMIT 1
+            """;
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setLong(1, clientId);
-            statement.setString(2, MembershipStatus.ACTIVE.name());
-
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapMembership(rs));
-                }
-            }
-
-            return Optional.empty();
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find active membership by client id: " + clientId, e);
-        }
+        return query(sql,
+                ps -> {
+                    ps.setLong(1, clientId);
+                    ps.setString(2, MembershipStatus.ACTIVE.name());
+                },
+                this::mapMembership
+        ).stream().findFirst();
     }
 
     @Override
-    public void update(Membership membership) {
+    public void update(Membership m) {
         String sql = """
-                UPDATE memberships
-                SET
-                    client_id = ?,
-                    membership_type_id = ?,
-                    start_date = ?,
-                    end_date = ?,
-                    remaining_visits = ?,
-                    status = ?
-                WHERE id = ?
-                """;
+            UPDATE memberships
+            SET client_id = ?, membership_type_id = ?, start_date = ?,
+                end_date = ?, remaining_visits = ?, status = ?
+            WHERE id = ?
+            """;
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
+        int updated = update(sql, ps -> {
+            ps.setLong(1, m.getClientId());
+            ps.setLong(2, m.getMembershipTypeId());
+            ps.setString(3, m.getStartDate().toString());
+            ps.setString(4, toString(m.getEndDate()));
 
-            statement.setLong(1, membership.getClientId());
-            statement.setLong(2, membership.getMembershipTypeId());
-            statement.setString(3, membership.getStartDate().toString());
-            statement.setString(4, membership.getEndDate() != null ? membership.getEndDate().toString() : null);
-
-            if (membership.getRemainingVisits() != null) {
-                statement.setInt(5, membership.getRemainingVisits());
+            if (m.getRemainingVisits() != null) {
+                ps.setInt(5, m.getRemainingVisits());
             } else {
-                statement.setNull(5, Types.INTEGER);
+                ps.setNull(5, Types.INTEGER);
             }
 
-            statement.setString(6, membership.getStatus().name());
-            statement.setLong(7, membership.getId());
+            ps.setString(6, m.getStatus().name());
+            ps.setLong(7, m.getId());
+        });
 
-            int updatedRows = statement.executeUpdate();
-            if (updatedRows == 0) {
-                throw new RuntimeException("Membership not found for update, id = " + membership.getId());
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to update membership, id = " + membership.getId(), e);
+        if (updated == 0) {
+            throw new RuntimeException("Membership not found: " + m.getId());
         }
     }
 
     @Override
-    public void expireById(Long membershipId) {
-        String sql = """
-                UPDATE memberships
-                SET status = ?
-                WHERE id = ?
-                """;
+    public void expireById(Long id) {
+        int updated = update(
+                "UPDATE memberships SET status = ? WHERE id = ?",
+                ps -> {
+                    ps.setString(1, MembershipStatus.EXPIRED.name());
+                    ps.setLong(2, id);
+                }
+        );
 
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, MembershipStatus.EXPIRED.name());
-            statement.setLong(2, membershipId);
-
-            int updatedRows = statement.executeUpdate();
-            if (updatedRows == 0) {
-                throw new RuntimeException("Membership not found for expire, id = " + membershipId);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to expire membership, id = " + membershipId, e);
+        if (updated == 0) {
+            throw new RuntimeException("Membership not found: " + id);
         }
     }
 
     @Override
     public void deactivateActiveByClientId(Long clientId) {
-        String sql = """
-            UPDATE memberships
-            SET status = ?
-            WHERE client_id = ?
-              AND status = ?
-            """;
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, MembershipStatus.CANCELLED.name());
-            statement.setLong(2, clientId);
-            statement.setString(3, MembershipStatus.ACTIVE.name());
-
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to deactivate active membership for client id: " + clientId, e);
-        }
+        update(
+                "UPDATE memberships SET status = ? WHERE client_id = ? AND status = ?",
+                ps -> {
+                    ps.setString(1, MembershipStatus.CANCELLED.name());
+                    ps.setLong(2, clientId);
+                    ps.setString(3, MembershipStatus.ACTIVE.name());
+                }
+        );
     }
 
     @Override
     public void expireOutdatedMemberships(LocalDate today) {
-        String sql = """
-            UPDATE memberships
-            SET status = ?
-            WHERE status = ?
-              AND end_date IS NOT NULL
-              AND end_date < ?
-            """;
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, MembershipStatus.EXPIRED.name());
-            statement.setString(2, MembershipStatus.ACTIVE.name());
-            statement.setString(3, today.toString());
-
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to expire outdated memberships", e);
-        }
+        update(
+                """
+                UPDATE memberships
+                SET status = ?
+                WHERE status = ?
+                  AND end_date IS NOT NULL
+                  AND end_date < ?
+                """,
+                ps -> {
+                    ps.setString(1, MembershipStatus.EXPIRED.name());
+                    ps.setString(2, MembershipStatus.ACTIVE.name());
+                    ps.setString(3, today.toString());
+                }
+        );
     }
 
     @Override
     public long countClientsWithActiveMembership() {
-        String sql = """
-            SELECT COUNT(DISTINCT client_id)
-            FROM memberships
-            WHERE status = ?
-            """;
-
-        try (Connection connection = connectionFactory.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-
-            statement.setString(1, MembershipStatus.ACTIVE.name());
-
-            try (ResultSet rs = statement.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getLong(1);
-                }
-            }
-
-            return 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to count clients with active membership", e);
-        }
+        return queryForLong(
+                "SELECT COUNT(DISTINCT client_id) FROM memberships WHERE status = ?",
+                ps -> ps.setString(1, MembershipStatus.ACTIVE.name())
+        );
     }
 
     private Membership mapMembership(ResultSet rs) throws SQLException {
-        Membership membership = new Membership();
+        Membership m = new Membership();
 
-        membership.setId(rs.getLong("id"));
-        membership.setClientId(rs.getLong("client_id"));
-        membership.setMembershipTypeId(rs.getLong("membership_type_id"));
-        membership.setStartDate(LocalDate.parse(rs.getString("start_date")));
+        m.setId(rs.getLong("id"));
+        m.setClientId(rs.getLong("client_id"));
+        m.setMembershipTypeId(rs.getLong("membership_type_id"));
+        m.setStartDate(LocalDate.parse(rs.getString("start_date")));
 
         String endDate = rs.getString("end_date");
         if (endDate != null) {
-            membership.setEndDate(LocalDate.parse(endDate));
+            m.setEndDate(LocalDate.parse(endDate));
         }
 
         int remainingVisits = rs.getInt("remaining_visits");
         if (!rs.wasNull()) {
-            membership.setRemainingVisits(remainingVisits);
+            m.setRemainingVisits(remainingVisits);
         }
 
-        membership.setStatus(MembershipStatus.valueOf(rs.getString("status")));
+        m.setStatus(MembershipStatus.valueOf(rs.getString("status")));
 
-        return membership;
+        return m;
     }
 }

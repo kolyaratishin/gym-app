@@ -1,8 +1,8 @@
 package com.gymapp;
 
 import com.gymapp.backup.BackupService;
-import com.gymapp.infrastructure.db.FlywayMigrator;
-import com.gymapp.infrastructure.db.SqliteConnectionFactory;
+import com.gymapp.db.FlywayMigrator;
+import com.gymapp.db.SqliteConnectionFactory;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
