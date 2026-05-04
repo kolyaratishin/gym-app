@@ -49,7 +49,7 @@
             <Label text="Основна інформація" styleClass="section-title"/>
 
             <GridPane hgap="18" vgap="16">
-                <Label text="ID" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <Label text="Номер клієнта" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
                 <Label fx:id="idValueLabel" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
                 <Label text="Ім'я" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
