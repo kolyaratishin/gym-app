@@ -1,0 +1,4 @@
+HEAD is now at 99acf01 updated git ignore
+From https://github.com/kolyaratishin/gym-app
+ * branch            main       -> FETCH_HEAD
+Already up to date.
