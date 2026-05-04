@@ -36,3 +36,7 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Launcher ###
+/launcher/Gym_App/backups/**
+/launcher/Gym_App/gym.db
