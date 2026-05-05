@@ -40,3 +40,5 @@ build/
 ### Launcher ###
 /launcher/Gym_App/backups/**
 /launcher/Gym_App/gym.db
+/backups
+/gym.db

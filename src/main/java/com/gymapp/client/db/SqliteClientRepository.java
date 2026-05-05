@@ -2,7 +2,6 @@ package com.gymapp.client.db;
 
 import com.gymapp.db.BaseRepository;
 import com.gymapp.db.ConnectionFactory;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -76,14 +75,13 @@ public class SqliteClientRepository extends BaseRepository implements ClientRepo
         }
 
         String sql = """
-                SELECT * FROM clients
-                WHERE LOWER(COALESCE(first_name, '')) LIKE LOWER(?)
-                   OR LOWER(COALESCE(last_name, '')) LIKE LOWER(?)
-                   OR LOWER(COALESCE(phone, '')) LIKE LOWER(?)
-                ORDER BY
-                    CASE WHEN client_number IS NULL THEN 1 ELSE 0 END,
-                    client_number,
-                    id
+                     SELECT * FROM clients
+                     WHERE LOWER(COALESCE(first_name, '')) LIKE LOWER(?)
+                        OR LOWER(COALESCE(last_name, '')) LIKE LOWER(?)
+                     ORDER BY
+                         CASE WHEN client_number IS NULL THEN 1 ELSE 0 END,
+                         client_number,
+                         id
                 """;
 
         String pattern = "%" + trimmed + "%";
@@ -92,7 +90,6 @@ public class SqliteClientRepository extends BaseRepository implements ClientRepo
                 ps -> {
                     ps.setString(1, pattern);
                     ps.setString(2, pattern);
-                    ps.setString(3, pattern);
                 },
                 this::mapClient
         );
@@ -160,12 +157,12 @@ public class SqliteClientRepository extends BaseRepository implements ClientRepo
         return queryForLong("SELECT COUNT(*) FROM clients WHERE active = 1", null);
     }
 
-    private List<Client> findByClientNumber(Integer clientNumber) {
+    public List<Client> findByClientNumber(Integer clientNumber) {
         String sql = """
-        SELECT * FROM clients
-        WHERE client_number = ?
-        ORDER BY id
-        """;
+                SELECT * FROM clients
+                WHERE client_number = ?
+                ORDER BY id
+                """;
 
         return query(sql,
                 ps -> ps.setInt(1, clientNumber),

@@ -9,6 +9,8 @@ public interface ClientRepository {
 
     Optional<Client> findById(Long id);
 
+    List<Client> findByClientNumber(Integer clientNumber);
+
     List<Client> findAll();
 
     List<Client> search(String query);

@@ -117,6 +117,8 @@ public class ClientFormController {
         String lastName = getTrimmedText(lastNameField);
         String phone = getTrimmedText(phoneField);
 
+        int parsedClientNumber = Integer.parseInt(clientNumber);
+
         if (clientNumber.isEmpty()) {
             return "Номер клієнта є обов'язковим";
         }
@@ -125,7 +127,7 @@ public class ClientFormController {
             return "Номер клієнта має бути числом";
         }
 
-        if (clientService.existsByClientNumber(Integer.valueOf(clientNumber))) {
+        if (isClientNumberAlreadyUsed(parsedClientNumber)) {
             return "Клієнт з таким номером вже існує";
         }
 
@@ -142,6 +144,20 @@ public class ClientFormController {
         }
 
         return null;
+    }
+
+    private boolean isClientNumberAlreadyUsed(Integer newClientNumber) {
+        if (editingClient == null) {
+            return clientService.existsByClientNumber(newClientNumber);
+        }
+
+        Integer currentClientNumber = editingClient.getClientNumber();
+
+        if (currentClientNumber != null && currentClientNumber.equals(newClientNumber)) {
+            return false;
+        }
+
+        return clientService.existsByClientNumber(newClientNumber);
     }
 
     private void notifyClientSaved() {

@@ -19,11 +19,24 @@ public class ClientService {
         return clientRepository.findAll();
     }
 
-    public List<Client> search(String query) {
-        if (query == null || query.isBlank()) {
-            return clientRepository.findAll();
+    public List<Client> search(String input) {
+        String trimmed = input == null ? "" : input.trim();
+
+        if (trimmed.isEmpty()) {
+            return findAll();
         }
-        return clientRepository.search(query);
+
+        // 🔥 1. пробуємо як number
+        if (isInteger(trimmed)) {
+            List<Client> byNumber = clientRepository.findByClientNumber(Integer.parseInt(trimmed));
+
+            if (!byNumber.isEmpty()) {
+                return byNumber;
+            }
+        }
+
+        // 🔥 2. fallback на текст
+        return clientRepository.search(trimmed);
     }
 
     public Optional<Client> findById(Long id) {
@@ -48,6 +61,15 @@ public class ClientService {
 
     public boolean existsByClientNumber(Integer clientNumber) {
         return clientRepository.existsByClientNumber(clientNumber);
+    }
+
+    private boolean isInteger(String value) {
+        try {
+            Integer.parseInt(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public Client createEmptyClient(Integer clientNumber) {

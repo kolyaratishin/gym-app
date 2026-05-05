@@ -56,8 +56,15 @@ public class ClientsController {
     public void initialize() {
         initializeTable();
         initializeRowDoubleClick();
+        initializeSearch();
 
         loadClients();
+    }
+
+    private void initializeSearch() {
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            searchClients(newValue);
+        });
     }
 
     private void initializeTable() {
@@ -93,7 +100,11 @@ public class ClientsController {
 
     @FXML
     private void onSearch() {
-        List<Client> clients = clientService.search(searchField.getText());
+        searchClients(searchField.getText());
+    }
+
+    private void searchClients(String query) {
+        List<Client> clients = clientService.search(query);
         setClients(clients);
     }
 
