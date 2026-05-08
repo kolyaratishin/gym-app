@@ -2,6 +2,7 @@
     -fx-font-family: "Segoe UI", "Inter", "Arial";
     -fx-background-color: #f5f7fb;
     -fx-text-fill: #1f2937;
+    -fx-font-size: 18px;
 }
 
 /* ===== Layout ===== */
@@ -19,8 +20,8 @@
 }
 
 .sidebar-title {
-    -fx-font-size: 24px;
-    -fx-font-weight: 700;
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
     -fx-text-fill: #111827;
 }
 
@@ -31,22 +32,26 @@
 
 .section-card {
     -fx-background-color: #ffffff;
-    -fx-background-radius: 14;
+    -fx-background-radius: 16;
     -fx-border-color: #e5e7eb;
-    -fx-border-radius: 14;
-    -fx-padding: 20;
+    -fx-border-radius: 16;
+    -fx-padding: 22;
 }
 
 .page-title {
-    -fx-font-size: 28px;
-    -fx-font-weight: 700;
+    -fx-font-size: 30px;
+    -fx-font-weight: 800;
     -fx-text-fill: #111827;
 }
 
 .section-title {
-    -fx-font-size: 20px;
-    -fx-font-weight: 700;
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
     -fx-text-fill: #111827;
+}
+
+.label {
+    -fx-font-size: 16px;
 }
 
 .muted-text {
@@ -58,12 +63,12 @@
 .button {
     -fx-background-color: #ffffff;
     -fx-text-fill: #1f2937;
-    -fx-background-radius: 10;
-    -fx-border-radius: 10;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
     -fx-border-color: #d1d5db;
-    -fx-padding: 10 16 10 16;
-    -fx-font-size: 15px;
-    -fx-font-weight: 600;
+    -fx-padding: 12 18 12 18;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
     -fx-cursor: hand;
 }
 
@@ -114,9 +119,9 @@
     -fx-border-color: transparent;
     -fx-text-fill: #374151;
     -fx-alignment: CENTER-LEFT;
-    -fx-padding: 14 16 14 18;
-    -fx-font-size: 15px;
-    -fx-font-weight: 600;
+    -fx-padding: 16 18 16 20;
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
     -fx-background-radius: 14;
     -fx-border-radius: 14;
     -fx-max-width: Infinity;
@@ -153,10 +158,10 @@
 .text-area {
     -fx-background-color: #ffffff;
     -fx-border-color: #d1d5db;
-    -fx-border-radius: 10;
-    -fx-background-radius: 10;
-    -fx-padding: 10 12 10 12;
-    -fx-font-size: 14px;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 12 14 12 14;
+    -fx-font-size: 16px;
 }
 
 .text-field:focused,
@@ -168,15 +173,15 @@
 }
 
 .label.form-label {
-    -fx-font-size: 14px;
-    -fx-font-weight: 600;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
     -fx-text-fill: #374151;
 }
 
 .error-label {
     -fx-text-fill: #dc2626;
-    -fx-font-size: 13px;
-    -fx-font-weight: 600;
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
 }
 
 /* ===== Table ===== */
@@ -186,6 +191,7 @@
     -fx-border-color: #e5e7eb;
     -fx-border-radius: 14;
     -fx-background-radius: 14;
+    -fx-fixed-cell-size: 44;
 }
 
 .table-view .column-header-background {
@@ -200,14 +206,15 @@
 
 .table-view .column-header .label {
     -fx-text-fill: #374151;
-    -fx-font-size: 14px;
-    -fx-font-weight: 700;
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
     -fx-alignment: CENTER-LEFT;
-    -fx-padding: 0 0 0 12;
+    -fx-padding: 0 0 0 14;
 }
 
 .table-row-cell {
     -fx-background-color: #ffffff;
+    -fx-cell-size: 70px;
 }
 
 .table-row-cell:filled:hover {
@@ -221,10 +228,10 @@
 .table-cell {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-font-size: 14px;
+    -fx-font-size: 16px;
     -fx-text-fill: #111827;
     -fx-alignment: CENTER-LEFT;
-    -fx-padding: 0 0 0 12;
+    -fx-padding: 0 0 0 14;
 }
 
 /* ===== Dashboard cards ===== */
@@ -234,19 +241,19 @@
     -fx-background-radius: 16;
     -fx-border-color: #e5e7eb;
     -fx-border-radius: 16;
-    -fx-padding: 20;
+    -fx-padding: 22;
     -fx-spacing: 8;
     -fx-min-width: 220;
 }
 
 .stat-title {
-    -fx-font-size: 14px;
+    -fx-font-size: 15px;
     -fx-text-fill: #6b7280;
-    -fx-font-weight: 600;
+    -fx-font-weight: 700;
 }
 
 .stat-value {
-    -fx-font-size: 30px;
+    -fx-font-size: 34px;
     -fx-font-weight: 800;
     -fx-text-fill: #111827;
 }
@@ -254,11 +261,11 @@
 /* ===== Badges ===== */
 
 .badge {
-    -fx-padding: 6 10 6 10;
+    -fx-padding: 8 12 8 12;
     -fx-background-radius: 999;
     -fx-border-radius: 999;
-    -fx-font-size: 13px;
-    -fx-font-weight: 700;
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
 }
 
 .badge-success {
@@ -284,10 +291,10 @@
 /* ===== Client details ===== */
 
 .status-pill {
-    -fx-padding: 10 16 10 16;
+    -fx-padding: 12 18 12 18;
     -fx-background-radius: 999;
     -fx-border-radius: 999;
-    -fx-font-size: 15px;
+    -fx-font-size: 16px;
     -fx-font-weight: 800;
 }
 
@@ -311,16 +318,21 @@
     -fx-text-fill: #374151;
 }
 
+.status-pill-info {
+    -fx-background-color: #dbeafe;
+    -fx-text-fill: #1d4ed8;
+}
+
 /* ===== Membership form ===== */
 
 .combo-box,
 .date-picker {
-    -fx-pref-height: 48;
+    -fx-pref-height: 52;
 }
 
 .combo-box .list-cell,
 .date-picker .text-field {
-    -fx-font-size: 15px;
+    -fx-font-size: 16px;
 }
 
 .date-picker .arrow-button,
@@ -337,11 +349,4 @@
 .separator *.line {
     -fx-border-color: #e5e7eb;
     -fx-border-width: 1 0 0 0;
-}
-
-/* common */
-
-.status-pill-info {
-    -fx-background-color: #dbeafe;
-    -fx-text-fill: #1d4ed8;
 }

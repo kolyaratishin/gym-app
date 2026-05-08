@@ -5,27 +5,27 @@ import com.gymapp.context.AppContext;
 import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.service.MembershipService;
 import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.util.DatePickerUtils;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class ClientMembershipFormController {
 
-    // Services
+    private static final Pattern TEEN_PATTERN =
+            Pattern.compile("(13\\s*[-–—]\\s*17)|(13\\s*до\\s*17)", Pattern.CASE_INSENSITIVE);
 
     private final MembershipService membershipService;
     private final MembershipTypeService membershipTypeService;
 
-    // State
-
     private Client client;
     private Runnable onMembershipSaved;
-
-    // UI helpers / binders
 
     private ClientMembershipPreviewBinder previewBinder;
     private ClientMembershipCurrentViewBinder currentViewBinder;
@@ -33,25 +33,17 @@ public class ClientMembershipFormController {
     private ClientMembershipFormSaver formSaver;
     private ClientMembershipManualFieldsBinder manualFieldsBinder;
 
-    // FXML: Client info
-
     @FXML
     private Label clientInfoLabel;
 
-    // FXML: Membership type
-
     @FXML
     private ComboBox<MembershipType> membershipTypeBox;
-
-    // FXML: Current membership
 
     @FXML
     private Label currentMembershipLabel;
 
     @FXML
     private Label replacementInfoLabel;
-
-    // FXML: Form fields
 
     @FXML
     private DatePicker startDatePicker;
@@ -65,8 +57,6 @@ public class ClientMembershipFormController {
     @FXML
     private TextField remainingVisitsField;
 
-    // FXML: Preview
-
     @FXML
     private Label previewPolicyLabel;
 
@@ -79,8 +69,6 @@ public class ClientMembershipFormController {
     @FXML
     private Label previewStatusLabel;
 
-    // FXML: Validation
-
     @FXML
     private Label errorLabel;
 
@@ -88,8 +76,6 @@ public class ClientMembershipFormController {
         this.membershipService = AppContext.membershipService();
         this.membershipTypeService = AppContext.membershipTypeService();
     }
-
-    // Lifecycle
 
     @FXML
     public void initialize() {
@@ -125,13 +111,15 @@ public class ClientMembershipFormController {
     }
 
     private void initializeFormDefaults() {
+        DatePickerUtils.configure(startDatePicker);
+        DatePickerUtils.configure(endDatePicker);
+
         startDatePicker.setValue(LocalDate.now());
     }
 
     private void initializeMembershipTypeBox() {
         membershipTypeBox.setCellFactory(param -> new MembershipTypeListCell());
         membershipTypeBox.setButtonCell(new MembershipTypeListCell());
-        loadMembershipTypes();
     }
 
     private void initializeListeners() {
@@ -151,8 +139,6 @@ public class ClientMembershipFormController {
         remainingVisitsField.textProperty().addListener((observable, oldValue, newValue) -> updatePreview());
     }
 
-    // Public API
-
     public void setClient(Client client) {
         this.client = client;
 
@@ -160,6 +146,7 @@ public class ClientMembershipFormController {
                 "Клієнт: " + client.getFirstName() + " " + client.getLastName() + " (ID: " + client.getId() + ")"
         );
 
+        loadMembershipTypes();
         loadCurrentMembership();
         updatePreview();
     }
@@ -167,8 +154,6 @@ public class ClientMembershipFormController {
     public void setOnMembershipSaved(Runnable onMembershipSaved) {
         this.onMembershipSaved = onMembershipSaved;
     }
-
-    // FXML actions
 
     @FXML
     private void onSave() {
@@ -189,11 +174,41 @@ public class ClientMembershipFormController {
         closeWindow();
     }
 
-    // Data loading
-
     private void loadMembershipTypes() {
         List<MembershipType> activeTypes = membershipTypeService.findActive();
-        membershipTypeBox.setItems(FXCollections.observableArrayList(activeTypes));
+        List<MembershipType> allowedTypes = filterMembershipTypesByAge(activeTypes);
+
+        membershipTypeBox.setItems(FXCollections.observableArrayList(allowedTypes));
+    }
+
+    private List<MembershipType> filterMembershipTypesByAge(List<MembershipType> types) {
+        if (client == null || client.getBirthDate() == null) {
+            return types.stream()
+                    .filter(type -> !isTeenMembership(type))
+                    .toList();
+        }
+
+        int age = Period.between(client.getBirthDate(), LocalDate.now()).getYears();
+
+        return types.stream()
+                .filter(type -> isMembershipAllowedForAge(type, age))
+                .toList();
+    }
+
+    private boolean isMembershipAllowedForAge(MembershipType type, int age) {
+        if (!isTeenMembership(type)) {
+            return true;
+        }
+
+        return age >= 13 && age <= 17;
+    }
+
+    private boolean isTeenMembership(MembershipType type) {
+        if (type == null || type.getName() == null) {
+            return false;
+        }
+
+        return TEEN_PATTERN.matcher(type.getName()).find();
     }
 
     private void loadCurrentMembership() {
@@ -201,8 +216,6 @@ public class ClientMembershipFormController {
                 membershipService.findActiveByClientId(client.getId())
         );
     }
-
-    // Form flow
 
     private String validateForm() {
         return validator.validate(
@@ -232,8 +245,6 @@ public class ClientMembershipFormController {
         }
     }
 
-    // UI updates
-
     private void updateManualFieldsState() {
         manualFieldsBinder.update(isManualMode(), getSelectedType());
     }
@@ -255,8 +266,6 @@ public class ClientMembershipFormController {
     private void showError(String message) {
         errorLabel.setText(message);
     }
-
-    // Helpers
 
     private MembershipType getSelectedType() {
         return membershipTypeBox.getValue();
@@ -284,8 +293,6 @@ public class ClientMembershipFormController {
         Stage stage = (Stage) clientInfoLabel.getScene().getWindow();
         stage.close();
     }
-
-    // UI components
 
     private static class MembershipTypeListCell extends ListCell<MembershipType> {
 
