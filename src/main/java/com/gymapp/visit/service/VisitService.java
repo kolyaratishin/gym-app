@@ -1,14 +1,13 @@
 package com.gymapp.visit.service;
 
-import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
 import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.db.domain.VisitPolicy;
-import com.gymapp.membership.db.MembershipRepository;
+import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.visit.db.Visit;
 import com.gymapp.visit.db.VisitRepository;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -77,6 +76,11 @@ public class VisitService {
         visitRepository.save(visit);
 
         return "Відвідування успішно зареєстровано";
+    }
+
+    public Boolean hasVisitToday(Long clientId)
+    {
+        return visitRepository.hasVisitToday(clientId);
     }
 
     private boolean isExpiredByDate(Membership membership) {

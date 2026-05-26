@@ -68,6 +68,32 @@ public abstract class BaseRepository {
         }
     }
 
+    protected boolean queryForBoolean(
+            String sql,
+            SqlConsumer<PreparedStatement> statementConsumer
+    ) {
+        try (
+                Connection connection = connectionFactory.getConnection();
+                PreparedStatement statement = connection.prepareStatement(sql)
+        ) {
+            if (statementConsumer != null) {
+                statementConsumer.accept(statement);
+            }
+
+            try (ResultSet rs = statement.executeQuery()) {
+
+                if (rs.next()) {
+                    return rs.getBoolean(1);
+                }
+
+                return false;
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to execute boolean query", e);
+        }
+    }
+
     protected long queryForLong(String sql, StatementSetter setter) {
         try (Connection connection = connectionFactory.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {

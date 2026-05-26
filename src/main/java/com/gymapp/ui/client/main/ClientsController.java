@@ -7,27 +7,29 @@ import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.db.domain.VisitPolicy;
 import com.gymapp.membership.service.MembershipTypeService;
-import com.gymapp.ui.client.form.ClientFormController;
 import com.gymapp.ui.client.details.ClientDetailsController;
 import com.gymapp.ui.client.empty.EmptyClientFormController;
+import com.gymapp.ui.client.form.ClientFormController;
+import com.gymapp.ui.common.DialogService;
 import com.gymapp.ui.common.ViewLoader;
-import com.gymapp.util.DateUtils;
+import com.gymapp.util.DatePickerUtils;
+import com.gymapp.visit.service.VisitService;
+import java.util.List;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
-import javafx.util.Duration;
-
-import java.util.List;
 
 public class ClientsController {
 
     private final ClientService clientService;
     private final MembershipRepository membershipRepository;
     private final MembershipTypeService membershipTypeService;
+    private final VisitService visitService;
 
     @FXML
     private TextField searchField;
@@ -56,10 +58,14 @@ public class ClientsController {
     @FXML
     private TableColumn<Client, String> membershipEndDateColumn;
 
+    @FXML
+    private TableColumn<Client, Void> visitActionColumn;
+
     public ClientsController() {
         this.clientService = AppContext.clientService();
         this.membershipRepository = AppContext.membershipRepository();
         this.membershipTypeService = AppContext.membershipTypeService();
+        this.visitService = AppContext.visitService();
     }
 
     @FXML
@@ -72,9 +78,7 @@ public class ClientsController {
     }
 
     private void initializeSearch() {
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            searchClients(newValue);
-        });
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> searchClients(newValue));
     }
 
     private void initializeTable() {
@@ -124,6 +128,8 @@ public class ClientsController {
         membershipEndDateColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(resolveMembershipEndDate(cellData.getValue()))
         );
+
+        visitActionColumn.setCellFactory(column -> new VisitActionTableCell());
     }
 
     private void initializeRowDoubleClick() {
@@ -175,46 +181,6 @@ public class ClientsController {
     @FXML
     private void onViewDetails() {
         openClientDetails(getSelectedClient());
-    }
-
-    @FXML
-    private void onDeactivateClient() {
-        Client selectedClient = getSelectedClient();
-
-        if (selectedClient == null || !selectedClient.isActive()) {
-            return;
-        }
-
-        boolean confirmed = showConfirmation(
-                "Підтвердження деактивації",
-                "Деактивувати клієнта?",
-                "Клієнт " + formatClientName(selectedClient) + " буде деактивований."
-        );
-
-        if (confirmed) {
-            clientService.deactivate(selectedClient.getId());
-            loadClients();
-        }
-    }
-
-    @FXML
-    private void onReactivateClient() {
-        Client selectedClient = getSelectedClient();
-
-        if (selectedClient == null || selectedClient.isActive()) {
-            return;
-        }
-
-        boolean confirmed = showConfirmation(
-                "Підтвердження реактивації",
-                "Реактивувати клієнта?",
-                "Клієнт " + formatClientName(selectedClient) + " буде реактивований."
-        );
-
-        if (confirmed) {
-            clientService.reactivate(selectedClient.getId());
-            loadClients();
-        }
     }
 
     @FXML
@@ -313,7 +279,7 @@ public class ClientsController {
         }
 
         return membershipRepository.findActiveByClientId(client.getId())
-                .map(membership -> DateUtils.format(membership.getEndDate()))
+                .map(membership -> DatePickerUtils.format(membership.getEndDate()))
                 .orElse("-");
     }
 
@@ -326,25 +292,6 @@ public class ClientsController {
                 .flatMap(membership -> membershipTypeService.findById(membership.getMembershipTypeId()))
                 .map(type -> type.getVisitPolicy() == VisitPolicy.LIMITED_BY_VISITS)
                 .orElse(false);
-    }
-
-    private boolean showConfirmation(String title, String header, String content) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(header);
-        alert.setContentText(content);
-
-        return alert.showAndWait()
-                .filter(ButtonType.OK::equals)
-                .isPresent();
-    }
-
-    private String formatClientName(Client client) {
-        return nullToEmpty(client.getFirstName()) + " " + nullToEmpty(client.getLastName());
-    }
-
-    private String nullToEmpty(String value) {
-        return value == null ? "" : value;
     }
 
     private class MembershipNameTableCell extends TableCell<Client, String> {
@@ -368,6 +315,90 @@ public class ClientsController {
             } else {
                 setStyle("-fx-background-color: transparent; -fx-text-fill: #111827; -fx-font-weight: 400;");
             }
+        }
+    }
+
+    private class VisitActionTableCell extends TableCell<Client, Void> {
+
+        private final Button button = new Button();
+
+        public VisitActionTableCell() {
+            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            button.setMaxWidth(Double.MAX_VALUE);
+            button.setPrefWidth(Double.MAX_VALUE);
+            setMaxWidth(Double.MAX_VALUE);
+
+            button.setOnAction(event -> {
+                Client client = getTableView().getItems().get(getIndex());
+
+                boolean confirmed = DialogService.showConfirm(
+                        "Підтвердження",
+                        "Підтвердити тренування для " + client.getFirstName() + " " + client.getLastName() + "?"
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                String resultMessage = visitService.registerVisit(client.getId());
+                DialogService.showInfoDialog("Реєстрація відвідування", resultMessage);
+                loadClients();
+            });
+        }
+
+        @Override
+        protected void updateItem(Void item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty) {
+                setGraphic(null);
+                return;
+            }
+
+            Client client = getTableView().getItems().get(getIndex());
+
+            if (!hasActiveMembership(client.getId())) {
+
+                button.setText("Немає абонемента");
+                button.setDisable(true);
+
+                button.setStyle("""
+                        -fx-background-color: #f3f4f6;
+                        -fx-text-fill: #6b7280;
+                        -fx-font-weight: 600;
+                        -fx-background-radius: 999;
+                        -fx-padding: 6 12 6 12;
+                        -fx-opacity: 1;
+                        """);
+
+            } else if (visitService.hasVisitToday(client.getId())) {
+
+                button.setText("✓ Сьогодні");
+                button.setDisable(true);
+
+                button.setStyle("""
+                        -fx-background-color: #dcfce7;
+                        -fx-text-fill: #166534;
+                        -fx-font-weight: 700;
+                        -fx-background-radius: 999;
+                        -fx-padding: 6 12 6 12;
+                        -fx-opacity: 1;
+                        """);
+
+            } else {
+
+                button.setText("Зареєструвати");
+                button.setDisable(false);
+
+                button.setStyle("""
+                        -fx-background-color: #dbeafe;
+                        -fx-text-fill: #1d4ed8;
+                        -fx-font-weight: 700;
+                        -fx-background-radius: 999;
+                        -fx-padding: 6 12 6 12;
+                        """);
+            }
+            setGraphic(button);
         }
     }
 

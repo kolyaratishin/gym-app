@@ -19,4 +19,6 @@ public interface VisitRepository {
     List<Visit> findByClientId(Long clientId);
 
     long countByDate(LocalDate date);
+
+    public boolean hasVisitToday(Long clientId);
 }

@@ -6,18 +6,16 @@ import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.ui.client.mebmership.ClientMembershipFormController;
-import com.gymapp.ui.common.ConfirmDialogController;
-import com.gymapp.ui.common.InfoDialogController;
+import com.gymapp.ui.common.DialogService;
 import com.gymapp.ui.common.ViewLoader;
 import com.gymapp.visit.db.VisitRepository;
 import com.gymapp.visit.service.VisitService;
+import java.time.LocalDate;
+import java.util.Optional;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
-
-import java.time.LocalDate;
-import java.util.Optional;
 
 public class ClientDetailsController {
 
@@ -182,7 +180,7 @@ public class ClientDetailsController {
             return;
         }
 
-        boolean confirmed = showConfirmDialog(
+        boolean confirmed = DialogService.showConfirm(
                 "Підтвердження",
                 "Підтвердити тренування для " + client.getFirstName() + " " + client.getLastName() + "?"
         );
@@ -192,7 +190,7 @@ public class ClientDetailsController {
         }
 
         String resultMessage = visitService.registerVisit(client.getId());
-        showInfoDialog("Реєстрація відвідування", resultMessage);
+        DialogService.showInfoDialog("Реєстрація відвідування", resultMessage);
 
         refreshClientState();
     }
@@ -218,29 +216,5 @@ public class ClientDetailsController {
     private void applyBadgeStyle(Label label, String text, String pillType) {
         label.setText(text);
         label.getStyleClass().setAll("status-pill", pillType);
-    }
-
-    private boolean showConfirmDialog(String title, String message) {
-        ConfirmDialogController controller =
-                ViewLoader.showModalAndReturnController(
-                        "/fxml/common/ConfirmDialogView.fxml",
-                        title,
-                        0.35,
-                        0.35,
-                        c -> c.setData(title, message)
-                );
-
-        return controller.isConfirmed();
-    }
-
-    private void showInfoDialog(String title, String message) {
-        ViewLoader.showModalAndReturnController(
-                "/fxml/common/InfoDialogView.fxml",
-                title,
-                0.35,
-                0.3,
-                (InfoDialogController controller) ->
-                        controller.setData(title, message)
-        );
     }
 }

@@ -108,6 +108,22 @@ public class SqliteVisitRepository extends BaseRepository implements VisitReposi
         );
     }
 
+    public boolean hasVisitToday(Long clientId) {
+        String sql = """
+        SELECT EXISTS(
+            SELECT 1
+            FROM visits
+            WHERE client_id = ?
+              AND DATE(visit_time) = DATE('now')
+        )
+    """;
+
+        return queryForBoolean(
+                sql,
+                ps -> ps.setLong(1, clientId)
+        );
+    }
+
     private Visit mapVisit(ResultSet rs) throws SQLException {
         Visit visit = new Visit();
 

@@ -66,6 +66,7 @@
                 <TableColumn fx:id="notesColumn" text="Нотатки" prefWidth="220" />
                 <TableColumn fx:id="membershipNameColumn" text="Абонемент" prefWidth="220"/>
                 <TableColumn fx:id="membershipEndDateColumn" text="Дата завершення" prefWidth="180" />
+                <TableColumn fx:id="visitActionColumn" text="Відвідування" prefWidth="180"/>
                 <TableColumn fx:id="activeColumn" text="Статус" prefWidth="150"/>
             </columns>
         </TableView>
