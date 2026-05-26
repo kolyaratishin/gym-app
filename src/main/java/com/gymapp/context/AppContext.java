@@ -1,5 +1,7 @@
 package com.gymapp.context;
 
+import com.gymapp.backup.BackupService;
+import com.gymapp.backup.BackupSettingsService;
 import com.gymapp.client.db.ClientRepository;
 import com.gymapp.client.db.SqliteClientRepository;
 import com.gymapp.client.service.ClientService;
@@ -42,6 +44,11 @@ public class AppContext {
                     membershipTypeService
             );
 
+    private static final BackupSettingsService backupSettingsService =
+            new BackupSettingsService();
+
+    private static final BackupService backupService =
+            new BackupService(backupSettingsService);
     public static ClientRepository clientRepository() {
         return clientRepository;
     }
@@ -71,5 +78,13 @@ public class AppContext {
 
     public static MembershipService membershipService() {
         return membershipService;
+    }
+
+    public static BackupSettingsService backupSettingsService() {
+        return backupSettingsService;
+    }
+
+    public static BackupService backupService() {
+        return backupService;
     }
 }

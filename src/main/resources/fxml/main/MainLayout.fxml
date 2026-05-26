@@ -32,15 +32,10 @@
                     onAction="#showMembershipTypes"
                     styleClass="nav-button"/>
 
-            <Button fx:id="createBackupButton"
-                    text="💾 Резервна копія"
+            <Button fx:id="databaseButton"
+                    text="💽 База даних"
                     maxWidth="Infinity"
-                    onAction="#createBackup"
-                    styleClass="nav-button"/>
-            <Button fx:id="restoreBackupButton"
-                    text="♻ Відновити базу даних"
-                    maxWidth="Infinity"
-                    onAction="#restoreBackup"
+                    onAction="#showDatabase"
                     styleClass="nav-button"/>
             <Button fx:id="exportClientsButton"
                     text="📤  Експорт клієнтів"

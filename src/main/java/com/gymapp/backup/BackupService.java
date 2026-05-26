@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class BackupService {
@@ -18,6 +19,12 @@ public class BackupService {
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     private static final int MAX_BACKUPS_TO_KEEP = 20;
+
+    private final BackupSettingsService backupSettingsService;
+
+    public BackupService(BackupSettingsService backupSettingsService) {
+        this.backupSettingsService = backupSettingsService;
+    }
 
     public Path createLocalBackup() {
         Path dbPath = SqliteConnectionFactory.getDbPath();
@@ -36,6 +43,7 @@ public class BackupService {
 
             Files.copy(dbPath, backupFile, StandardCopyOption.REPLACE_EXISTING);
 
+            copyToExtraBackupPathIfConfigured(backupFile);
             deleteOldBackupsIfNeeded();
 
             return backupFile;
@@ -81,6 +89,37 @@ public class BackupService {
         }
     }
 
+    public Optional<Path> getExtraBackupPath() {
+        return backupSettingsService.getExtraBackupPath();
+    }
+
+    public void saveExtraBackupPath(String path) {
+        backupSettingsService.saveExtraBackupPath(path);
+    }
+
+    public void clearExtraBackupPath() {
+        backupSettingsService.clearExtraBackupPath();
+    }
+
+    private void copyToExtraBackupPathIfConfigured(Path backupFile) {
+        Optional<Path> extraBackupPath = backupSettingsService.getExtraBackupPath();
+
+        if (extraBackupPath.isEmpty()) {
+            return;
+        }
+
+        try {
+            Path extraDir = extraBackupPath.get();
+            Files.createDirectories(extraDir);
+
+            Path extraBackupFile = extraDir.resolve(backupFile.getFileName());
+
+            Files.copy(backupFile, extraBackupFile, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            System.out.println("Failed to create extra backup copy: " + e.getMessage());
+        }
+    }
+
     private void deleteOldBackupsIfNeeded() {
         List<Path> backups = listBackups();
 
@@ -101,9 +140,11 @@ public class BackupService {
 
     private Path resolveBackupDir(Path dbPath) {
         Path parent = dbPath.getParent();
+
         if (parent == null) {
             return Path.of("backups");
         }
+
         return parent.resolve("backups");
     }
 }

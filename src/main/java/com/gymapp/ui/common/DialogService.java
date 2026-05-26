@@ -23,7 +23,7 @@ public final class DialogService {
                 "/fxml/common/InfoDialogView.fxml",
                 title,
                 0.35,
-                0.28,
+                0.35,
                 (InfoDialogController controller) -> controller.setData(title, message)
         );
     }
@@ -33,7 +33,7 @@ public final class DialogService {
                 "/fxml/common/InfoDialogView.fxml",
                 title,
                 0.35,
-                0.3,
+                0.35,
                 (InfoDialogController controller) ->
                         controller.setData(title, message)
         );

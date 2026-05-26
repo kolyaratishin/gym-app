@@ -1,14 +1,12 @@
 package com.gymapp.ui.main;
 
-import com.gymapp.backup.BackupService;
-import com.gymapp.client.service.ClientCsvService;
-import com.gymapp.client.dto.ImportResult;
 import com.gymapp.client.db.SqliteClientRepository;
+import com.gymapp.client.dto.ImportResult;
+import com.gymapp.client.service.ClientCsvService;
 import com.gymapp.membership.db.SqliteMembershipRepository;
 import com.gymapp.membership.db.SqliteMembershipTypeRepository;
 import com.gymapp.ui.common.ImportResultController;
 import com.gymapp.ui.common.InfoDialogController;
-import com.gymapp.ui.common.RestoreBackupController;
 import java.io.File;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -18,13 +16,9 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-
-import java.nio.file.Path;
 import javafx.stage.Window;
 
 public class MainController {
-
-    private final BackupService backupService = new BackupService();
     private final com.gymapp.db.ConnectionFactory connectionFactory =
             new com.gymapp.db.SqliteConnectionFactory();
 
@@ -48,15 +42,7 @@ public class MainController {
     private Button membershipTypesButton;
 
     @FXML
-    private Button createBackupButton;
-
-    @FXML
-    private Button restoreBackupButton;
-
-    @FXML
-    private Button exportClientsButton;
-    @FXML
-    private Button importClientsButton;
+    private Button databaseButton;
 
     @FXML
     public void initialize() {
@@ -83,50 +69,9 @@ public class MainController {
     }
 
     @FXML
-    private void createBackup() {
-        try {
-            Path backupFile = backupService.createLocalBackup();
-            showInfoDialog(
-                    "Backup створено",
-                    "Файл backup успішно створено:\n" + backupFile
-            );
-        } catch (Exception e) {
-            showInfoDialog(
-                    "Помилка backup",
-                    "Не вдалося створити backup:\n" + e.getMessage()
-            );
-        }
-    }
-
-    @FXML
-    private void restoreBackup() {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/common/RestoreBackupView.fxml")
-            );
-
-            Scene scene = new Scene(loader.load(), 520, 420);
-            scene.getStylesheets().add(
-                    getClass().getResource("/css/app.css").toExternalForm()
-            );
-
-            RestoreBackupController controller = loader.getController();
-            controller.setOnRestoreCompleted(() ->
-                    showInfoDialog(
-                            "Backup відновлено",
-                            "Backup успішно відновлено.\nПерезапусти додаток, щоб зміни точно застосувались."
-                    )
-            );
-
-            Stage stage = new Stage();
-            stage.setTitle("Відновлення backup");
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(scene);
-            stage.setResizable(true);
-            stage.showAndWait();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to open restore backup dialog", e);
-        }
+    private void showDatabase() {
+        loadView("/fxml/database/DatabaseView.fxml");
+        setActiveNavButton(databaseButton);
     }
 
     @FXML
@@ -246,8 +191,7 @@ public class MainController {
         dashboardButton.getStyleClass().remove("nav-button-active");
         clientsButton.getStyleClass().remove("nav-button-active");
         membershipTypesButton.getStyleClass().remove("nav-button-active");
-        createBackupButton.getStyleClass().remove("nav-button-active");
-        restoreBackupButton.getStyleClass().remove("nav-button-active");
+        databaseButton.getStyleClass().remove("nav-button-active");
 
         if (activeButton != null && !activeButton.getStyleClass().contains("nav-button-active")) {
             activeButton.getStyleClass().add("nav-button-active");

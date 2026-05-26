@@ -1,6 +1,7 @@
 package com.gymapp;
 
 import com.gymapp.backup.BackupService;
+import com.gymapp.context.AppContext;
 import com.gymapp.db.FlywayMigrator;
 import com.gymapp.db.SqliteConnectionFactory;
 import javafx.application.Application;
@@ -17,7 +18,7 @@ import java.nio.file.StandardOpenOption;
 
 public class GymApplication extends Application {
 
-    private final BackupService backupService = new BackupService();
+    private final BackupService backupService = AppContext.backupService();
 
     public static void main(String[] args) {
         Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> logError("Uncaught exception", throwable));

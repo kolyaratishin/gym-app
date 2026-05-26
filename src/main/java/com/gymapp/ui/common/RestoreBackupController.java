@@ -1,6 +1,7 @@
 package com.gymapp.ui.common;
 
 import com.gymapp.backup.BackupService;
+import com.gymapp.context.AppContext;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -12,7 +13,7 @@ import java.util.List;
 
 public class RestoreBackupController {
 
-    private final BackupService backupService = new BackupService();
+    private final BackupService backupService = AppContext.backupService();
 
     private Path selectedBackup;
     private Runnable onRestoreCompleted;
