@@ -200,7 +200,7 @@ public class ClientMembershipFormController {
             return true;
         }
 
-        return age >= 13 && age <= 17;
+        return age >= 0 && age <= 17;
     }
 
     private boolean isTeenMembership(MembershipType type) {
