@@ -1,6 +1,7 @@
 package com.gymapp.ui.client.details;
 
 import com.gymapp.client.db.Client;
+import com.gymapp.util.DatePickerUtils;
 import javafx.scene.control.Label;
 
 import java.time.LocalDate;
@@ -46,7 +47,7 @@ public class ClientDetailsViewBinder {
     }
 
     private String formatDate(LocalDate date) {
-        return date != null ? date.toString() : "-";
+        return DatePickerUtils.format(date);
     }
 
     private String formatInteger(Integer value) {

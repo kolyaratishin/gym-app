@@ -17,7 +17,9 @@ import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.util.List;
 
@@ -41,6 +43,9 @@ public class ClientsController {
 
     @FXML
     private TableColumn<Client, String> lastNameColumn;
+
+    @FXML
+    private TableColumn<Client, String> notesColumn;
 
     @FXML
     private TableColumn<Client, String> activeColumn;
@@ -78,6 +83,33 @@ public class ClientsController {
         clientNumberColumn.setCellValueFactory(new PropertyValueFactory<>("clientNumber"));
         firstNameColumn.setCellValueFactory(new PropertyValueFactory<>("firstName"));
         lastNameColumn.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+        notesColumn.setCellValueFactory(new PropertyValueFactory<>("notes"));
+        notesColumn.setCellFactory(column -> new TableCell<>() {
+
+            private final Label label = new Label();
+
+            {
+                label.setWrapText(true);
+                label.setMaxWidth(260);
+                label.setTextFill(Color.web("#111827"));
+                label.getStyleClass().add("table-notes-label");
+
+                setGraphic(label);
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            }
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty || item == null || item.isBlank()) {
+                    label.setText("-");
+                    return;
+                }
+
+                label.setText(item);
+            }
+        });
 
         activeColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(resolveClientStatus(cellData.getValue()))

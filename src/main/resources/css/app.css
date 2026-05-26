@@ -214,6 +214,7 @@
 
 .table-row-cell {
     -fx-background-color: #ffffff;
+    -fx-cell-size: 70px;
 }
 
 .table-row-cell:filled:hover {

@@ -5,6 +5,7 @@ import com.gymapp.membership.db.domain.MembershipStatus;
 import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.db.domain.VisitPolicy;
 import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.util.DatePickerUtils;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 
@@ -196,7 +197,7 @@ public class ClientMembershipViewBinder {
     }
 
     private String formatDate(LocalDate date) {
-        return date != null ? date.toString() : "-";
+        return DatePickerUtils.format(date);
     }
 
     private String formatInteger(Integer value) {

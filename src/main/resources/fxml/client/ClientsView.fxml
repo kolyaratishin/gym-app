@@ -60,9 +60,10 @@
     <VBox VBox.vgrow="ALWAYS" styleClass="section-card">
         <TableView fx:id="clientsTable" VBox.vgrow="ALWAYS">
             <columns>
-                <TableColumn fx:id="clientNumberColumn" text="№" prefWidth="80"/>
+                <TableColumn fx:id="clientNumberColumn" text="№"/>
                 <TableColumn fx:id="firstNameColumn" text="Ім'я" prefWidth="180"/>
                 <TableColumn fx:id="lastNameColumn" text="Прізвище" prefWidth="200"/>
+                <TableColumn fx:id="notesColumn" text="Нотатки" prefWidth="220" />
                 <TableColumn fx:id="membershipNameColumn" text="Абонемент" prefWidth="220"/>
                 <TableColumn fx:id="membershipEndDateColumn" text="Дата завершення" prefWidth="180" />
                 <TableColumn fx:id="activeColumn" text="Статус" prefWidth="150"/>

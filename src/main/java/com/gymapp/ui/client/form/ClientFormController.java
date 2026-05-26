@@ -3,6 +3,7 @@ package com.gymapp.ui.client.form;
 import com.gymapp.client.db.Client;
 import com.gymapp.client.service.ClientService;
 import com.gymapp.context.AppContext;
+import com.gymapp.util.DatePickerUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -46,6 +47,11 @@ public class ClientFormController {
 
     public void setOnClientSaved(Runnable onClientSaved) {
         this.onClientSaved = onClientSaved;
+    }
+
+    @FXML
+    private void initialize() {
+        DatePickerUtils.configure(birthDatePicker);
     }
 
     public void setClient(Client client) {

@@ -17,6 +17,7 @@ com\gymapp\ui\client\empty\EmptyClientFormController.class
 com\gymapp\context\AppContext.class
 com\gymapp\ui\membership\MembershipTypeFormController$2.class
 com\gymapp\dashboard\dto\ClientVisitStat.class
+com\gymapp\ui\client\main\ClientsController$1.class
 com\gymapp\ui\client\mebmership\ClientMembershipCurrentViewBinder.class
 com\gymapp\client\service\ClientCsvService$ImportRow.class
 com\gymapp\ui\client\form\ClientFormController.class
@@ -46,6 +47,7 @@ com\gymapp\db\ConnectionFactory.class
 com\gymapp\ui\client\mebmership\ClientMembershipPreviewBinder.class
 com\gymapp\ui\common\ViewLoader.class
 com\gymapp\backup\BackupService.class
+com\gymapp\util\DatePickerUtils.class
 com\gymapp\client\db\Client.class
 com\gymapp\GymApplication.class
 com\gymapp\ui\common\InfoDialogController.class
@@ -54,6 +56,7 @@ com\gymapp\db\BaseRepository.class
 com\gymapp\ui\client\details\ClientMembershipViewBinder$1.class
 com\gymapp\ui\client\mebmership\ClientMembershipFormValidator.class
 com\gymapp\ui\common\RestoreBackupController$1.class
+com\gymapp\util\DatePickerUtils$1.class
 com\gymapp\client\dto\ImportResult.class
 com\gymapp\membership\db\MembershipRepository.class
 com\gymapp\ui\client\mebmership\ClientMembershipPreviewBinder$1.class
