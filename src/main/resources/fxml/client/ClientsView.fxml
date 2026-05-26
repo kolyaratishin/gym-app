@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.Label?>
 
+<?import javafx.scene.layout.Region?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.gymapp.ui.client.main.ClientsController"
       spacing="18"
@@ -46,6 +47,13 @@
             <Button text="Додати пустий номер"
                     onAction="#onAddEmptyClient"
                     styleClass="button"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    text="Оновити"
+                    onAction="#onRefresh"
+                    styleClass="button,primary-button"/>
         </HBox>
     </VBox>
 

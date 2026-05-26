@@ -197,6 +197,11 @@ public class ClientsController {
         );
     }
 
+    @FXML
+    private void onRefresh() {
+        loadClients();
+    }
+
     private void loadClients() {
         List<Client> clients = clientService.findAll();
         setClients(clients);

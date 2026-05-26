@@ -226,7 +226,7 @@ public class ClientDetailsController {
                         "/fxml/common/ConfirmDialogView.fxml",
                         title,
                         0.35,
-                        0.3,
+                        0.35,
                         c -> c.setData(title, message)
                 );
 
