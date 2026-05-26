@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.Label?>
 
+<?import javafx.scene.layout.Region?>
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.gymapp.ui.client.main.ClientsController"
       spacing="18"
@@ -46,6 +47,13 @@
             <Button text="Додати пустий номер"
                     onAction="#onAddEmptyClient"
                     styleClass="button"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button
+                    text="Оновити"
+                    onAction="#onRefresh"
+                    styleClass="button,primary-button"/>
         </HBox>
     </VBox>
 
@@ -57,6 +65,8 @@
                 <TableColumn fx:id="lastNameColumn" text="Прізвище" prefWidth="200"/>
                 <TableColumn fx:id="notesColumn" text="Нотатки" prefWidth="220" />
                 <TableColumn fx:id="membershipNameColumn" text="Абонемент" prefWidth="220"/>
+                <TableColumn fx:id="membershipEndDateColumn" text="Дата завершення" prefWidth="180" />
+                <TableColumn fx:id="visitActionColumn" text="Відвідування" prefWidth="180"/>
                 <TableColumn fx:id="activeColumn" text="Статус" prefWidth="150"/>
             </columns>
         </TableView>
