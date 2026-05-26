@@ -56,6 +56,7 @@
                 <TableColumn fx:id="firstNameColumn" text="Ім'я" prefWidth="180"/>
                 <TableColumn fx:id="lastNameColumn" text="Прізвище" prefWidth="200"/>
                 <TableColumn fx:id="membershipNameColumn" text="Абонемент" prefWidth="220"/>
+                <TableColumn fx:id="membershipEndDateColumn" text="Дата завершення" prefWidth="180" />
                 <TableColumn fx:id="activeColumn" text="Статус" prefWidth="150"/>
             </columns>
         </TableView>

@@ -3,6 +3,7 @@ package com.gymapp.client.service;
 import com.gymapp.client.db.Client;
 import com.gymapp.client.db.ClientRepository;
 
+import com.gymapp.client.dto.ClientTableRow;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -63,6 +64,10 @@ public class ClientService {
         return clientRepository.existsByClientNumber(clientNumber);
     }
 
+    public List<ClientTableRow> findAllTableRows() {
+        return clientRepository.findAllTableRows();
+    }
+
     private boolean isInteger(String value) {
         try {
             Integer.parseInt(value);
@@ -87,5 +92,24 @@ public class ClientService {
         client.setActive(false);
 
         return clientRepository.save(client);
+    }
+
+    public List<ClientTableRow> searchTableRows(String input) {
+        String trimmed = input == null ? "" : input.trim();
+
+        if (trimmed.isEmpty()) {
+            return clientRepository.findAllTableRows();
+        }
+
+        if (isInteger(trimmed)) {
+            List<ClientTableRow> byNumber =
+                    clientRepository.findTableRowsByClientNumber(Integer.parseInt(trimmed));
+
+            if (!byNumber.isEmpty()) {
+                return byNumber;
+            }
+        }
+
+        return clientRepository.searchTableRowsByText(trimmed);
     }
 }

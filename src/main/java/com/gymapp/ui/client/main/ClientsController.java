@@ -5,11 +5,13 @@ import com.gymapp.client.service.ClientService;
 import com.gymapp.context.AppContext;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.MembershipType;
+import com.gymapp.membership.db.domain.VisitPolicy;
 import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.ui.client.form.ClientFormController;
 import com.gymapp.ui.client.details.ClientDetailsController;
 import com.gymapp.ui.client.empty.EmptyClientFormController;
 import com.gymapp.ui.common.ViewLoader;
+import com.gymapp.util.DateUtils;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -46,6 +48,9 @@ public class ClientsController {
     @FXML
     private TableColumn<Client, String> membershipNameColumn;
 
+    @FXML
+    private TableColumn<Client, String> membershipEndDateColumn;
+
     public ClientsController() {
         this.clientService = AppContext.clientService();
         this.membershipRepository = AppContext.membershipRepository();
@@ -81,6 +86,11 @@ public class ClientsController {
 
         membershipNameColumn.setCellValueFactory(cellData ->
                 new SimpleStringProperty(resolveMembershipName(cellData.getValue()))
+        );
+        membershipNameColumn.setCellFactory(column -> new MembershipNameTableCell());
+
+        membershipEndDateColumn.setCellValueFactory(cellData ->
+                new SimpleStringProperty(resolveMembershipEndDate(cellData.getValue()))
         );
     }
 
@@ -260,6 +270,27 @@ public class ClientsController {
                 .orElse("-");
     }
 
+    private String resolveMembershipEndDate(Client client) {
+        if (client == null) {
+            return "-";
+        }
+
+        return membershipRepository.findActiveByClientId(client.getId())
+                .map(membership -> DateUtils.format(membership.getEndDate()))
+                .orElse("-");
+    }
+
+    private boolean hasVisitBasedMembership(Client client) {
+        if (client == null) {
+            return false;
+        }
+
+        return membershipRepository.findActiveByClientId(client.getId())
+                .flatMap(membership -> membershipTypeService.findById(membership.getMembershipTypeId()))
+                .map(type -> type.getVisitPolicy() == VisitPolicy.LIMITED_BY_VISITS)
+                .orElse(false);
+    }
+
     private boolean showConfirmation(String title, String header, String content) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle(title);
@@ -277,6 +308,30 @@ public class ClientsController {
 
     private String nullToEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private class MembershipNameTableCell extends TableCell<Client, String> {
+
+        @Override
+        protected void updateItem(String item, boolean empty) {
+            super.updateItem(item, empty);
+
+            if (empty || item == null || item.isBlank()) {
+                setText("-");
+                setStyle("");
+                return;
+            }
+
+            setText(item);
+
+            Client client = getTableView().getItems().get(getIndex());
+
+            if (hasVisitBasedMembership(client)) {
+                setStyle("-fx-background-color: #fef3c7; -fx-text-fill: #92400e; -fx-font-weight: 800;");
+            } else {
+                setStyle("-fx-background-color: transparent; -fx-text-fill: #111827; -fx-font-weight: 400;");
+            }
+        }
     }
 
     private static class ClientStatusTableCell extends TableCell<Client, String> {

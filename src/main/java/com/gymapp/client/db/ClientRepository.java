@@ -1,5 +1,6 @@
 package com.gymapp.client.db;
 
+import com.gymapp.client.dto.ClientTableRow;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,4 +27,10 @@ public interface ClientRepository {
     long countActive();
 
     boolean existsByClientNumber(Integer clientNumber);
+
+    public List<ClientTableRow> findAllTableRows();
+
+    public List<ClientTableRow> findTableRowsByClientNumber(Integer clientNumber);
+
+    public List<ClientTableRow> searchTableRowsByText(String text);
 }

@@ -1,7 +1,9 @@
 package com.gymapp.client.db;
 
+import com.gymapp.client.dto.ClientTableRow;
 import com.gymapp.db.BaseRepository;
 import com.gymapp.db.ConnectionFactory;
+import com.gymapp.membership.db.domain.VisitPolicy;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -211,5 +213,116 @@ public class SqliteClientRepository extends BaseRepository implements ClientRepo
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    public List<ClientTableRow> findAllTableRows() {
+        String sql = """
+        SELECT
+            c.id,
+            c.client_number,
+            c.first_name,
+            c.last_name,
+            c.notes,
+            c.active,
+            mt.name AS membership_name,
+            m.end_date AS membership_end_date,
+            mt.visit_policy AS visit_policy
+        FROM clients c
+        LEFT JOIN memberships m
+            ON m.client_id = c.id
+           AND m.status = 'ACTIVE'
+        LEFT JOIN membership_types mt
+            ON mt.id = m.membership_type_id
+        ORDER BY
+            CASE WHEN c.client_number IS NULL THEN 1 ELSE 0 END,
+            c.client_number,
+            c.id
+        """;
+
+        return query(sql, null, this::mapClientTableRow);
+    }
+
+    public List<ClientTableRow> findTableRowsByClientNumber(Integer clientNumber) {
+        String sql = """
+        SELECT
+            c.id,
+            c.client_number,
+            c.first_name,
+            c.last_name,
+            c.notes,
+            c.active,
+            mt.name AS membership_name,
+            m.end_date AS membership_end_date,
+            mt.visit_policy AS visit_policy
+        FROM clients c
+        LEFT JOIN memberships m
+            ON m.client_id = c.id
+           AND m.status = 'ACTIVE'
+        LEFT JOIN membership_types mt
+            ON mt.id = m.membership_type_id
+        WHERE c.client_number = ?
+        ORDER BY c.id
+        """;
+
+        return query(
+                sql,
+                ps -> ps.setInt(1, clientNumber),
+                this::mapClientTableRow
+        );
+    }
+
+    public List<ClientTableRow> searchTableRowsByText(String text) {
+        String sql = """
+        SELECT
+            c.id,
+            c.client_number,
+            c.first_name,
+            c.last_name,
+            c.notes,
+            c.active,
+            mt.name AS membership_name,
+            m.end_date AS membership_end_date,
+            mt.visit_policy AS visit_policy
+        FROM clients c
+        LEFT JOIN memberships m
+            ON m.client_id = c.id
+           AND m.status = 'ACTIVE'
+        LEFT JOIN membership_types mt
+            ON mt.id = m.membership_type_id
+        WHERE LOWER(COALESCE(c.first_name, '')) LIKE LOWER(?)
+           OR LOWER(COALESCE(c.last_name, '')) LIKE LOWER(?)
+        ORDER BY
+            CASE WHEN c.client_number IS NULL THEN 1 ELSE 0 END,
+            c.client_number,
+            c.id
+        """;
+
+        String pattern = "%" + text + "%";
+
+        return query(
+                sql,
+                ps -> {
+                    ps.setString(1, pattern);
+                    ps.setString(2, pattern);
+                },
+                this::mapClientTableRow
+        );
+    }
+
+    private ClientTableRow mapClientTableRow(ResultSet rs) throws SQLException {
+        String endDate = rs.getString("membership_end_date");
+        String visitPolicy = rs.getString("visit_policy");
+
+        return new ClientTableRow(
+                rs.getLong("id"),
+                getIntegerOrNull(rs, "client_number"),
+                rs.getString("first_name"),
+                rs.getString("last_name"),
+                rs.getString("notes"),
+                rs.getInt("active") == 1,
+                rs.getString("membership_name"),
+                endDate != null ? LocalDate.parse(endDate) : null,
+                visitPolicy != null ? VisitPolicy.valueOf(visitPolicy) : null
+        );
     }
 }
