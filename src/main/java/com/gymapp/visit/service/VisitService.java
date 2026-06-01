@@ -8,8 +8,11 @@ import com.gymapp.membership.db.domain.VisitPolicy;
 import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.visit.db.Visit;
 import com.gymapp.visit.db.VisitRepository;
+import com.gymapp.visit.dto.ClientVisitHistoryRow;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public class VisitService {
@@ -89,5 +92,13 @@ public class VisitService {
         }
 
         return membership.getEndDate().isBefore(LocalDate.now());
+    }
+
+    public List<Visit> findByClientId(Long clientId) {
+        return visitRepository.findByClientId(clientId);
+    }
+
+    public List<ClientVisitHistoryRow> findHistoryByClientId(Long clientId) {
+        return visitRepository.findHistoryByClientId(clientId);
     }
 }

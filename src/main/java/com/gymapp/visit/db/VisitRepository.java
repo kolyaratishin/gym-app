@@ -1,5 +1,7 @@
 package com.gymapp.visit.db;
 
+import com.gymapp.visit.dto.ClientVisitHistoryRow;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -21,4 +23,6 @@ public interface VisitRepository {
     long countByDate(LocalDate date);
 
     public boolean hasVisitToday(Long clientId);
+
+    List<ClientVisitHistoryRow> findHistoryByClientId(Long clientId);
 }

@@ -39,6 +39,9 @@
                 onAction="#onManageMembership"
                 styleClass="button"/>
 
+        <Button text="Історія відвідувань"
+                onAction="#onViewVisitHistory"/>
+
         <Button text="Закрити"
                 onAction="#onClose"
                 styleClass="button"/>

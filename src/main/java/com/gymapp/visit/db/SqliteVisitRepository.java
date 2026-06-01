@@ -2,6 +2,7 @@ package com.gymapp.visit.db;
 
 import com.gymapp.db.BaseRepository;
 import com.gymapp.db.ConnectionFactory;
+import com.gymapp.visit.dto.ClientVisitHistoryRow;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -108,6 +109,30 @@ public class SqliteVisitRepository extends BaseRepository implements VisitReposi
         );
     }
 
+    @Override
+    public List<ClientVisitHistoryRow> findHistoryByClientId(Long clientId) {
+        String sql = """
+        SELECT
+            v.id AS visit_id,
+            v.visit_time,
+            m.id AS membership_id,
+            mt.name AS membership_type_name,
+            m.start_date AS membership_start_date,
+            m.end_date AS membership_end_date,
+            m.remaining_visits
+        FROM visits v
+        LEFT JOIN memberships m ON m.id = v.membership_id
+        LEFT JOIN membership_types mt ON mt.id = m.membership_type_id
+        WHERE v.client_id = ?
+        ORDER BY v.visit_time DESC
+        """;
+
+        return query(sql,
+                ps -> ps.setLong(1, clientId),
+                this::mapClientVisitHistoryRow
+        );
+    }
+
     public boolean hasVisitToday(Long clientId) {
         String sql = """
         SELECT EXISTS(
@@ -133,5 +158,21 @@ public class SqliteVisitRepository extends BaseRepository implements VisitReposi
         visit.setVisitTime(LocalDateTime.parse(rs.getString("visit_time")));
 
         return visit;
+    }
+
+    private ClientVisitHistoryRow mapClientVisitHistoryRow(ResultSet rs) throws SQLException {
+        return new ClientVisitHistoryRow(
+                rs.getLong("visit_id"),
+                LocalDateTime.parse(rs.getString("visit_time")),
+                rs.getLong("membership_id"),
+                rs.getString("membership_type_name"),
+                parseDateOrNull(rs.getString("membership_start_date")),
+                parseDateOrNull(rs.getString("membership_end_date")),
+                getIntegerOrNull(rs, "remaining_visits")
+        );
+    }
+
+    private LocalDate parseDateOrNull(String value) {
+        return value == null ? null : LocalDate.parse(value);
     }
 }

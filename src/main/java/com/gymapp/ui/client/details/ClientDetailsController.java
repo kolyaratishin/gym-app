@@ -5,6 +5,7 @@ import com.gymapp.context.AppContext;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.ui.client.history.ClientVisitHistoryController;
 import com.gymapp.ui.client.mebmership.ClientMembershipFormController;
 import com.gymapp.ui.common.DialogService;
 import com.gymapp.ui.common.ViewLoader;
@@ -205,6 +206,22 @@ public class ClientDetailsController {
         } else {
             applyBadgeStyle(visitedTodayIndicatorLabel, "✖ Сьогодні не був", "status-pill-danger");
         }
+    }
+
+    @FXML
+    private void onViewVisitHistory() {
+        if (client == null) {
+            return;
+        }
+
+        ViewLoader.openWindow(
+                "/fxml/client/ClientVisitHistoryView.fxml",
+                "Історія відвідувань",
+                0.55,
+                0.7,
+                (ClientVisitHistoryController controller) ->
+                        controller.setClient(client)
+        );
     }
 
     @FXML
