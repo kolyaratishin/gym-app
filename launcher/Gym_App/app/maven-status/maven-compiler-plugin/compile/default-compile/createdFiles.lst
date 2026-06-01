@@ -29,6 +29,7 @@ com\gymapp\util\DatePickerUtils$1.class
 com\gymapp\ui\database\DatabaseController.class
 com\gymapp\client\dto\ImportResult.class
 com\gymapp\membership\db\MembershipRepository.class
+com\gymapp\visit\dto\ClientVisitHistoryRow.class
 com\gymapp\ui\client\mebmership\ClientMembershipPreviewBinder$1.class
 com\gymapp\dashboard\dto\VisitDayStat.class
 com\gymapp\ui\client\mebmership\ClientMembershipFormController$MembershipTypeListCell.class
@@ -46,6 +47,7 @@ com\gymapp\ui\client\details\ClientDetailsController.class
 com\gymapp\ui\common\DialogService.class
 com\gymapp\ui\common\RestoreBackupController.class
 com\gymapp\ui\membership\MembershipTypeFormController$2.class
+com\gymapp\ui\client\history\ClientVisitHistoryController.class
 com\gymapp\ui\client\main\ClientsController$1.class
 com\gymapp\membership\db\SqliteMembershipRepository.class
 com\gymapp\membership\db\MembershipTypeRepository.class
