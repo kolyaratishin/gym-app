@@ -1,5 +1,6 @@
 package com.gymapp;
 
+import com.gymapp.audit.GlobalExceptionHandler;
 import com.gymapp.backup.BackupService;
 import com.gymapp.context.AppContext;
 import com.gymapp.db.FlywayMigrator;
@@ -28,6 +29,7 @@ public class GymApplication extends Application {
     @Override
     public void start(Stage stage) {
         try {
+            GlobalExceptionHandler.install();
             new FlywayMigrator(SqliteConnectionFactory.getUrl()).migrate();
 
             createStartupBackupSilently();

@@ -1,5 +1,8 @@
 package com.gymapp.client.service;
 
+import com.gymapp.audit.ActivityLogger;
+import com.gymapp.audit.AuditEventType;
+import com.gymapp.audit.AuditLogMessages;
 import com.gymapp.client.db.Client;
 import com.gymapp.client.dto.ImportResult;
 import com.gymapp.membership.db.domain.Membership;
@@ -58,6 +61,11 @@ public class ClientCsvService {
                 }
             }
 
+            ActivityLogger.log(
+                    AuditEventType.CLIENTS_EXPORTED,
+                    AuditLogMessages.clientsExported(outputFile, clients.size())
+            );
+
             return outputFile;
         } catch (IOException e) {
             throw new RuntimeException("Failed to export clients to CSV", e);
@@ -106,7 +114,14 @@ public class ClientCsvService {
                 }
             }
 
-            return new ImportResult(imported, membershipsImported, skipped, errors);
+            ImportResult result = new ImportResult(imported, membershipsImported, skipped, errors);
+
+            ActivityLogger.log(
+                    AuditEventType.CLIENTS_IMPORTED,
+                    AuditLogMessages.clientsImported(inputFile, result)
+            );
+
+            return result;
         } catch (IOException e) {
             throw new RuntimeException("Failed to import clients from CSV", e);
         }

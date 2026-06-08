@@ -1,5 +1,9 @@
 package com.gymapp.backup;
 
+import com.gymapp.audit.ActivityLogger;
+import com.gymapp.audit.AuditEventType;
+import com.gymapp.audit.AuditLogMessages;
+import com.gymapp.audit.ErrorLogger;
 import com.gymapp.db.SqliteConnectionFactory;
 
 import java.io.IOException;
@@ -19,6 +23,8 @@ public class BackupService {
             DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     private static final int MAX_BACKUPS_TO_KEEP = 20;
+    private static final String EXTRA_BACKUP_COPY_ERROR_SOURCE = "BackupService.copyToExtraBackupPathIfConfigured";
+    private static final String DELETE_OLD_BACKUP_ERROR_SOURCE = "BackupService.deleteOldBackupsIfNeeded";
 
     private final BackupSettingsService backupSettingsService;
 
@@ -43,8 +49,13 @@ public class BackupService {
 
             Files.copy(dbPath, backupFile, StandardCopyOption.REPLACE_EXISTING);
 
-            copyToExtraBackupPathIfConfigured(backupFile);
+            Optional<Path> extraBackupPath = copyToExtraBackupPathIfConfigured(backupFile);
             deleteOldBackupsIfNeeded();
+
+            ActivityLogger.log(
+                    AuditEventType.BACKUP_CREATED,
+                    AuditLogMessages.backupCreated(dbPath, backupFile, extraBackupPath.orElse(null))
+            );
 
             return backupFile;
         } catch (IOException e) {
@@ -84,6 +95,11 @@ public class BackupService {
             }
 
             Files.copy(backupFile, dbPath, StandardCopyOption.REPLACE_EXISTING);
+
+            ActivityLogger.log(
+                    AuditEventType.BACKUP_RESTORED,
+                    AuditLogMessages.backupRestored(backupFile, dbPath)
+            );
         } catch (IOException e) {
             throw new RuntimeException("Failed to restore backup", e);
         }
@@ -95,17 +111,27 @@ public class BackupService {
 
     public void saveExtraBackupPath(String path) {
         backupSettingsService.saveExtraBackupPath(path);
+
+        ActivityLogger.log(
+                AuditEventType.BACKUP_EXTRA_PATH_UPDATED,
+                AuditLogMessages.backupExtraPathUpdated(path)
+        );
     }
 
     public void clearExtraBackupPath() {
         backupSettingsService.clearExtraBackupPath();
+
+        ActivityLogger.log(
+                AuditEventType.BACKUP_EXTRA_PATH_CLEARED,
+                AuditLogMessages.backupExtraPathCleared()
+        );
     }
 
-    private void copyToExtraBackupPathIfConfigured(Path backupFile) {
+    private Optional<Path> copyToExtraBackupPathIfConfigured(Path backupFile) {
         Optional<Path> extraBackupPath = backupSettingsService.getExtraBackupPath();
 
         if (extraBackupPath.isEmpty()) {
-            return;
+            return Optional.empty();
         }
 
         try {
@@ -115,8 +141,10 @@ public class BackupService {
             Path extraBackupFile = extraDir.resolve(backupFile.getFileName());
 
             Files.copy(backupFile, extraBackupFile, StandardCopyOption.REPLACE_EXISTING);
+            return Optional.of(extraBackupFile);
         } catch (Exception e) {
-            System.out.println("Failed to create extra backup copy: " + e.getMessage());
+            ErrorLogger.log(EXTRA_BACKUP_COPY_ERROR_SOURCE, e);
+            return Optional.empty();
         }
     }
 
@@ -133,7 +161,7 @@ public class BackupService {
             try {
                 Files.deleteIfExists(backup);
             } catch (IOException e) {
-                System.out.println("Failed to delete old backup: " + backup);
+                ErrorLogger.log(DELETE_OLD_BACKUP_ERROR_SOURCE + ": " + backup, e);
             }
         }
     }

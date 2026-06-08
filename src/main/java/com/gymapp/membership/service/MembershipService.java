@@ -1,5 +1,8 @@
 package com.gymapp.membership.service;
 
+import com.gymapp.audit.ActivityLogger;
+import com.gymapp.audit.AuditEventType;
+import com.gymapp.audit.AuditLogMessages;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
@@ -26,7 +29,7 @@ public class MembershipService {
     }
 
     public Membership replaceMembership(Long clientId, MembershipType membershipType, LocalDate startDate) {
-        membershipRepository.deactivateActiveByClientId(clientId);
+        deactivateActiveMembershipIfPresent(clientId);
         return createMembership(clientId, membershipType, startDate);
     }
 
@@ -47,12 +50,23 @@ public class MembershipService {
             LocalDate endDate,
             Integer remainingVisits
     ) {
-        membershipRepository.deactivateActiveByClientId(clientId);
+        deactivateActiveMembershipIfPresent(clientId);
         return createManualMembership(clientId, membershipType, startDate, endDate, remainingVisits);
     }
 
     public void expireOutdatedMemberships() {
         membershipRepository.expireOutdatedMemberships(LocalDate.now());
+    }
+
+    private void deactivateActiveMembershipIfPresent(Long clientId) {
+        Optional<Membership> activeMembership = membershipRepository.findActiveByClientId(clientId);
+
+        membershipRepository.deactivateActiveByClientId(clientId);
+
+        activeMembership.ifPresent(membership -> ActivityLogger.log(
+                AuditEventType.MEMBERSHIP_DEACTIVATED,
+                AuditLogMessages.membershipDeactivated(membership)
+        ));
     }
 
     private Membership saveNewMembership(
@@ -70,7 +84,14 @@ public class MembershipService {
                 customRemainingVisits
         );
 
-        return membershipRepository.save(membership);
+        Membership saved = membershipRepository.save(membership);
+
+        ActivityLogger.log(
+                AuditEventType.MEMBERSHIP_CREATED,
+                AuditLogMessages.membershipCreated(saved, membershipType)
+        );
+
+        return saved;
     }
 
     private Membership buildMembership(

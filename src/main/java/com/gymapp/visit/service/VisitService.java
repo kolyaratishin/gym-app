@@ -1,5 +1,8 @@
 package com.gymapp.visit.service;
 
+import com.gymapp.audit.ActivityLogger;
+import com.gymapp.audit.AuditEventType;
+import com.gymapp.audit.AuditLogMessages;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
@@ -16,6 +19,9 @@ import java.util.List;
 import java.util.Optional;
 
 public class VisitService {
+
+    private static final String EXPIRED_BY_DATE_REASON = "endDate is before today";
+    private static final String EXPIRED_BY_VISITS_REASON = "remainingVisits is null or less/equal zero";
 
     private final VisitRepository visitRepository;
     private final MembershipRepository membershipRepository;
@@ -50,6 +56,12 @@ public class VisitService {
         if (isExpiredByDate(membership)) {
             membership.setStatus(MembershipStatus.EXPIRED);
             membershipRepository.update(membership);
+
+            ActivityLogger.log(
+                    AuditEventType.MEMBERSHIP_EXPIRED,
+                    AuditLogMessages.membershipExpired(membership, EXPIRED_BY_DATE_REASON)
+            );
+
             return "Абонемент клієнта вже прострочений";
         }
 
@@ -59,6 +71,12 @@ public class VisitService {
             if (remainingVisits == null || remainingVisits <= 0) {
                 membership.setStatus(MembershipStatus.EXPIRED);
                 membershipRepository.update(membership);
+
+                ActivityLogger.log(
+                        AuditEventType.MEMBERSHIP_EXPIRED,
+                        AuditLogMessages.membershipExpired(membership, EXPIRED_BY_VISITS_REASON)
+                );
+
                 return "У клієнта закінчилися відвідування";
             }
 
@@ -76,13 +94,17 @@ public class VisitService {
         visit.setMembershipId(membership.getId());
         visit.setVisitTime(LocalDateTime.now());
 
-        visitRepository.save(visit);
+        Visit savedVisit = visitRepository.save(visit);
+
+        ActivityLogger.log(
+                AuditEventType.VISIT_REGISTERED,
+                AuditLogMessages.visitRegistered(savedVisit, membership, membershipType)
+        );
 
         return "Відвідування успішно зареєстровано";
     }
 
-    public Boolean hasVisitToday(Long clientId)
-    {
+    public Boolean hasVisitToday(Long clientId) {
         return visitRepository.hasVisitToday(clientId);
     }
 

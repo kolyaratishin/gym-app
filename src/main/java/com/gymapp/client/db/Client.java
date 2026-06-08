@@ -86,6 +86,11 @@ public class Client {
         this.active = active;
     }
 
+    public String getFullName()
+    {
+        return getFirstName() + " " + getLastName();
+    }
+
     @Override
     public String toString() {
         return "Client{" +

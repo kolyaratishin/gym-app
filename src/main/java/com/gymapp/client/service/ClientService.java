@@ -1,9 +1,11 @@
 package com.gymapp.client.service;
 
+import com.gymapp.audit.ActivityLogger;
+import com.gymapp.audit.AuditEventType;
+import com.gymapp.audit.AuditLogMessages;
 import com.gymapp.client.db.Client;
 import com.gymapp.client.db.ClientRepository;
 
-import com.gymapp.client.dto.ClientTableRow;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -44,28 +46,25 @@ public class ClientService {
         return clientRepository.findById(id);
     }
 
-    public void deactivate(Long clientId) {
-        clientRepository.deactivate(clientId);
-    }
-
-    public void reactivate(Long clientId) {
-        clientRepository.reactivate(clientId);
-    }
-
     public Client save(Client client) {
-        return clientRepository.save(client);
+        Client saved = clientRepository.save(client);
+        ActivityLogger.log(
+                AuditEventType.CLIENT_CREATED,
+                AuditLogMessages.clientCreated(saved)
+        );
+        return saved;
     }
 
     public void update(Client client) {
         clientRepository.update(client);
+        ActivityLogger.log(
+                AuditEventType.CLIENT_UPDATED,
+                AuditLogMessages.clientUpdated(client)
+        );
     }
 
     public boolean existsByClientNumber(Integer clientNumber) {
         return clientRepository.existsByClientNumber(clientNumber);
-    }
-
-    public List<ClientTableRow> findAllTableRows() {
-        return clientRepository.findAllTableRows();
     }
 
     private boolean isInteger(String value) {
@@ -91,25 +90,13 @@ public class ClientService {
         client.setRegistrationDate(LocalDate.now());
         client.setActive(false);
 
-        return clientRepository.save(client);
-    }
+        Client saved = clientRepository.save(client);
 
-    public List<ClientTableRow> searchTableRows(String input) {
-        String trimmed = input == null ? "" : input.trim();
+        ActivityLogger.log(
+                AuditEventType.CLIENT_CREATED,
+                AuditLogMessages.emptyClientCreated(saved)
+        );
 
-        if (trimmed.isEmpty()) {
-            return clientRepository.findAllTableRows();
-        }
-
-        if (isInteger(trimmed)) {
-            List<ClientTableRow> byNumber =
-                    clientRepository.findTableRowsByClientNumber(Integer.parseInt(trimmed));
-
-            if (!byNumber.isEmpty()) {
-                return byNumber;
-            }
-        }
-
-        return clientRepository.searchTableRowsByText(trimmed);
+        return saved;
     }
 }
