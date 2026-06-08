@@ -1,5 +1,8 @@
 package com.gymapp.ui.client.empty;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.client.service.ClientService;
 import com.gymapp.context.AppContext;
 import javafx.fxml.FXML;
@@ -43,12 +46,21 @@ public class EmptyClientFormController {
             return;
         }
 
-        Integer clientNumber = Integer.parseInt(getTrimmedValue());
+        try {
+            Integer clientNumber = Integer.parseInt(getTrimmedValue());
 
-        clientService.createEmptyClient(clientNumber);
+            clientService.createEmptyClient(clientNumber);
 
-        notifySaved();
-        closeWindow();
+            notifySaved();
+            closeWindow();
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.EMPTY_CLIENT_FORM_SAVE,
+                    UserErrorMessages.EMPTY_CLIENT_SAVE_FAILED,
+                    "clientNumber=" + getTrimmedValue(),
+                    e
+            );
+        }
     }
 
     @FXML

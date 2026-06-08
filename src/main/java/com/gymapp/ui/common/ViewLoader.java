@@ -1,5 +1,7 @@
 package com.gymapp.ui.common;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
 import com.gymapp.util.GymAppUtils;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -71,6 +73,11 @@ public final class ViewLoader {
 
             return new LoadedView<>(scene, controller);
         } catch (Exception e) {
+            ErrorHandler.logOnly(
+                    ErrorLogMessages.VIEW_LOADER_LOAD_VIEW,
+                    "fxmlPath=" + fxmlPath,
+                    e
+            );
             throw new RuntimeException("Failed to load view: " + fxmlPath, e);
         }
     }

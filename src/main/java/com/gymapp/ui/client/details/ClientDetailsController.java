@@ -1,5 +1,8 @@
 package com.gymapp.ui.client.details;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.client.db.Client;
 import com.gymapp.context.AppContext;
 import com.gymapp.membership.db.MembershipRepository;
@@ -153,26 +156,35 @@ public class ClientDetailsController {
             return;
         }
 
-        Stage stage = ViewLoader.openWindow(
-                "/fxml/client/ClientMembershipFormView.fxml",
-                "Керування абонементом",
-                0.72,
-                0.92,
-                (ClientMembershipFormController controller) -> {
-                    controller.setClient(client);
-                    controller.setOnMembershipSaved(() -> {
-                        refreshClientState();
+        try {
+            Stage stage = ViewLoader.openWindow(
+                    "/fxml/client/ClientMembershipFormView.fxml",
+                    "Керування абонементом",
+                    0.72,
+                    0.92,
+                    (ClientMembershipFormController controller) -> {
+                        controller.setClient(client);
+                        controller.setOnMembershipSaved(() -> {
+                            refreshClientState();
 
-                        if (onClientUpdated != null) {
-                            onClientUpdated.run();
-                        }
-                    });
-                }
-        );
+                            if (onClientUpdated != null) {
+                                onClientUpdated.run();
+                            }
+                        });
+                    }
+            );
 
-        stage.setMaximized(true);
-        stage.setMinWidth(560);
-        stage.setMinHeight(300);
+            stage.setMaximized(true);
+            stage.setMinWidth(560);
+            stage.setMinHeight(300);
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_DETAILS_MANAGE_MEMBERSHIP,
+                    UserErrorMessages.MEMBERSHIP_MANAGE_OPEN_FAILED,
+                    buildClientErrorDetails(),
+                    e
+            );
+        }
     }
 
     @FXML
@@ -190,21 +202,39 @@ public class ClientDetailsController {
             return;
         }
 
-        String resultMessage = visitService.registerVisit(client.getId());
-        DialogService.showInfoDialog("Реєстрація відвідування", resultMessage);
+        try {
+            String resultMessage = visitService.registerVisit(client.getId());
+            DialogService.showInfoDialog("Реєстрація відвідування", resultMessage);
 
-        refreshClientState();
+            refreshClientState();
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_DETAILS_REGISTER_VISIT,
+                    UserErrorMessages.VISIT_REGISTER_FAILED,
+                    buildClientErrorDetails(),
+                    e
+            );
+        }
     }
 
     private void updateVisitedTodayIndicator(Long clientId) {
-        boolean visitedToday = visitRepository.findByClientId(clientId).stream()
-                .anyMatch(visit -> visit.getVisitTime() != null
-                        && visit.getVisitTime().toLocalDate().isEqual(LocalDate.now()));
+        try {
+            boolean visitedToday = visitRepository.findByClientId(clientId).stream()
+                    .anyMatch(visit -> visit.getVisitTime() != null
+                            && visit.getVisitTime().toLocalDate().isEqual(LocalDate.now()));
 
-        if (visitedToday) {
-            applyBadgeStyle(visitedTodayIndicatorLabel, "✔ Сьогодні був", "status-pill-success");
-        } else {
-            applyBadgeStyle(visitedTodayIndicatorLabel, "✖ Сьогодні не був", "status-pill-danger");
+            if (visitedToday) {
+                applyBadgeStyle(visitedTodayIndicatorLabel, "✔ Сьогодні був", "status-pill-success");
+            } else {
+                applyBadgeStyle(visitedTodayIndicatorLabel, "✖ Сьогодні не був", "status-pill-danger");
+            }
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_DETAILS_LOAD_VISIT_STATE,
+                    UserErrorMessages.VISIT_STATE_LOAD_FAILED,
+                    "clientId=" + clientId,
+                    e
+            );
         }
     }
 
@@ -214,20 +244,40 @@ public class ClientDetailsController {
             return;
         }
 
-        ViewLoader.openWindow(
-                "/fxml/client/ClientVisitHistoryView.fxml",
-                "Історія відвідувань",
-                0.55,
-                0.7,
-                (ClientVisitHistoryController controller) ->
-                        controller.setClient(client)
-        );
+        try {
+            ViewLoader.openWindow(
+                    "/fxml/client/ClientVisitHistoryView.fxml",
+                    "Історія відвідувань",
+                    0.55,
+                    0.7,
+                    (ClientVisitHistoryController controller) ->
+                            controller.setClient(client)
+            );
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_VISIT_HISTORY_OPEN,
+                    UserErrorMessages.VISIT_HISTORY_OPEN_FAILED,
+                    buildClientErrorDetails(),
+                    e
+            );
+        }
     }
 
     @FXML
     private void onClose() {
         Stage stage = (Stage) idValueLabel.getScene().getWindow();
         stage.close();
+    }
+
+    private String buildClientErrorDetails() {
+        if (client == null) {
+            return "client=null";
+        }
+
+        return "clientId=" + client.getId()
+                + ", clientNumber=" + client.getClientNumber()
+                + ", firstName=" + client.getFirstName()
+                + ", lastName=" + client.getLastName();
     }
 
     private void applyBadgeStyle(Label label, String text, String pillType) {

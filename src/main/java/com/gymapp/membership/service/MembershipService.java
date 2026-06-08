@@ -2,7 +2,6 @@ package com.gymapp.membership.service;
 
 import com.gymapp.audit.ActivityLogger;
 import com.gymapp.audit.AuditEventType;
-import com.gymapp.audit.AuditLogMessages;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
@@ -25,11 +24,16 @@ public class MembershipService {
     }
 
     public Membership createMembership(Long clientId, MembershipType membershipType, LocalDate startDate) {
-        return saveNewMembership(clientId, membershipType, startDate, null, null);
+        Membership membership = saveNewMembership(clientId, membershipType, startDate, null, null);
+        ActivityLogger.log(
+                AuditEventType.MEMBERSHIP_CREATED,
+                "Створено абонемент для clientId=" + clientId + " "
+        );
+        return membership;
     }
 
     public Membership replaceMembership(Long clientId, MembershipType membershipType, LocalDate startDate) {
-        deactivateActiveMembershipIfPresent(clientId);
+        membershipRepository.deactivateActiveByClientId(clientId);
         return createMembership(clientId, membershipType, startDate);
     }
 
@@ -50,23 +54,12 @@ public class MembershipService {
             LocalDate endDate,
             Integer remainingVisits
     ) {
-        deactivateActiveMembershipIfPresent(clientId);
+        membershipRepository.deactivateActiveByClientId(clientId);
         return createManualMembership(clientId, membershipType, startDate, endDate, remainingVisits);
     }
 
     public void expireOutdatedMemberships() {
         membershipRepository.expireOutdatedMemberships(LocalDate.now());
-    }
-
-    private void deactivateActiveMembershipIfPresent(Long clientId) {
-        Optional<Membership> activeMembership = membershipRepository.findActiveByClientId(clientId);
-
-        membershipRepository.deactivateActiveByClientId(clientId);
-
-        activeMembership.ifPresent(membership -> ActivityLogger.log(
-                AuditEventType.MEMBERSHIP_DEACTIVATED,
-                AuditLogMessages.membershipDeactivated(membership)
-        ));
     }
 
     private Membership saveNewMembership(
@@ -84,14 +77,7 @@ public class MembershipService {
                 customRemainingVisits
         );
 
-        Membership saved = membershipRepository.save(membership);
-
-        ActivityLogger.log(
-                AuditEventType.MEMBERSHIP_CREATED,
-                AuditLogMessages.membershipCreated(saved, membershipType)
-        );
-
-        return saved;
+        return membershipRepository.save(membership);
     }
 
     private Membership buildMembership(

@@ -1,5 +1,8 @@
 package com.gymapp.ui.main;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.client.db.SqliteClientRepository;
 import com.gymapp.client.dto.ImportResult;
 import com.gymapp.client.service.ClientCsvService;
@@ -83,8 +86,8 @@ public class MainController {
         );
         fileChooser.setInitialFileName("clients-export.csv");
 
-        javafx.stage.Window window = contentPane.getScene() != null ? contentPane.getScene().getWindow() : null;
-        java.io.File selectedFile = fileChooser.showSaveDialog(window);
+        Window window = contentPane.getScene() != null ? contentPane.getScene().getWindow() : null;
+        File selectedFile = fileChooser.showSaveDialog(window);
 
         if (selectedFile == null) {
             return;
@@ -97,9 +100,11 @@ public class MainController {
                     "Клієнтів успішно експортовано у файл:\n" + exportedFile
             );
         } catch (Exception e) {
-            showInfoDialog(
-                    "Помилка експорту",
-                    "Не вдалося експортувати клієнтів:\n" + e.getMessage()
+            ErrorHandler.handle(
+                    ErrorLogMessages.MAIN_EXPORT_CLIENTS,
+                    UserErrorMessages.EXPORT_CLIENTS_FAILED,
+                    "file=" + selectedFile.getAbsolutePath(),
+                    e
             );
         }
     }
@@ -119,11 +124,20 @@ public class MainController {
             return;
         }
 
-        ImportResult result = clientCsvService.importClients(selectedFile.toPath());
-        showImportResultDialog(result);
+        try {
+            ImportResult result = clientCsvService.importClients(selectedFile.toPath());
+            showImportResultDialog(result);
 
-        loadView("/fxml/client/ClientsView.fxml");
-        setActiveNavButton(clientsButton);
+            loadView("/fxml/client/ClientsView.fxml");
+            setActiveNavButton(clientsButton);
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.MAIN_IMPORT_CLIENTS,
+                    UserErrorMessages.IMPORT_CLIENTS_FAILED,
+                    "file=" + selectedFile.getAbsolutePath(),
+                    e
+            );
+        }
     }
 
     private void showImportResultDialog(ImportResult result) {
@@ -148,7 +162,11 @@ public class MainController {
             stage.setMinHeight(450);
             stage.showAndWait();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to open import result dialog", e);
+            ErrorHandler.handle(
+                    ErrorLogMessages.MAIN_SHOW_IMPORT_RESULT,
+                    UserErrorMessages.VIEW_LOAD_FAILED,
+                    e
+            );
         }
     }
 
@@ -158,7 +176,12 @@ public class MainController {
             Parent view = loader.load();
             contentPane.getChildren().setAll(view);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load view: " + fxmlPath, e);
+            ErrorHandler.handle(
+                    ErrorLogMessages.MAIN_LOAD_VIEW,
+                    UserErrorMessages.VIEW_LOAD_FAILED,
+                    "fxmlPath=" + fxmlPath,
+                    e
+            );
         }
     }
 
@@ -183,11 +206,15 @@ public class MainController {
             stage.setResizable(false);
             stage.showAndWait();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to open info dialog", e);
+            ErrorHandler.logOnly(
+                    ErrorLogMessages.MAIN_SHOW_INFO_DIALOG,
+                    "title=" + title + ", message=" + message,
+                    e
+            );
         }
     }
 
-    private void setActiveNavButton(javafx.scene.control.Button activeButton) {
+    private void setActiveNavButton(Button activeButton) {
         dashboardButton.getStyleClass().remove("nav-button-active");
         clientsButton.getStyleClass().remove("nav-button-active");
         membershipTypesButton.getStyleClass().remove("nav-button-active");

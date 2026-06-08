@@ -2,7 +2,6 @@ package com.gymapp.client.service;
 
 import com.gymapp.audit.ActivityLogger;
 import com.gymapp.audit.AuditEventType;
-import com.gymapp.audit.AuditLogMessages;
 import com.gymapp.client.db.Client;
 import com.gymapp.client.db.ClientRepository;
 
@@ -50,17 +49,14 @@ public class ClientService {
         Client saved = clientRepository.save(client);
         ActivityLogger.log(
                 AuditEventType.CLIENT_CREATED,
-                AuditLogMessages.clientCreated(saved)
+                "Створено клієнта: " + client.getFullName() + ", №" + client.getClientNumber()
         );
         return saved;
     }
 
     public void update(Client client) {
         clientRepository.update(client);
-        ActivityLogger.log(
-                AuditEventType.CLIENT_UPDATED,
-                AuditLogMessages.clientUpdated(client)
-        );
+        ActivityLogger.log(AuditEventType.CLIENT_UPDATED, "Дані клієнта були редаговані: " + client);
     }
 
     public boolean existsByClientNumber(Integer clientNumber) {
@@ -90,13 +86,6 @@ public class ClientService {
         client.setRegistrationDate(LocalDate.now());
         client.setActive(false);
 
-        Client saved = clientRepository.save(client);
-
-        ActivityLogger.log(
-                AuditEventType.CLIENT_CREATED,
-                AuditLogMessages.emptyClientCreated(saved)
-        );
-
-        return saved;
+        return clientRepository.save(client);
     }
 }

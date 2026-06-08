@@ -1,10 +1,11 @@
 package com.gymapp.ui.membership;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
+import com.gymapp.context.AppContext;
 import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.membership.db.domain.MembershipType;
-import com.gymapp.db.ConnectionFactory;
-import com.gymapp.db.SqliteConnectionFactory;
-import com.gymapp.membership.db.SqliteMembershipTypeRepository;
 import com.gymapp.util.GymAppUtils;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -25,9 +26,7 @@ public class MembershipTypesController {
     private final MembershipTypeService membershipTypeService;
 
     public MembershipTypesController() {
-        ConnectionFactory connectionFactory = new SqliteConnectionFactory();
-        SqliteMembershipTypeRepository repository = new SqliteMembershipTypeRepository(connectionFactory);
-        this.membershipTypeService = new MembershipTypeService(repository);
+        this.membershipTypeService = AppContext.membershipTypeService();
     }
 
     @FXML
@@ -85,7 +84,11 @@ public class MembershipTypesController {
             stage.setScene(scene);
             stage.show();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to open membership type form", e);
+            ErrorHandler.handle(
+                    ErrorLogMessages.MEMBERSHIP_TYPE_FORM_OPEN_CREATE,
+                    UserErrorMessages.MEMBERSHIP_TYPE_FORM_OPEN_FAILED,
+                    e
+            );
         }
     }
 
@@ -116,7 +119,12 @@ public class MembershipTypesController {
             stage.setScene(scene);
             stage.show();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to open edit membership type form", e);
+            ErrorHandler.handle(
+                    ErrorLogMessages.MEMBERSHIP_TYPE_FORM_OPEN_EDIT,
+                    UserErrorMessages.MEMBERSHIP_TYPE_FORM_OPEN_FAILED,
+                    "membershipTypeId=" + selected.getId() + ", name=" + selected.getName(),
+                    e
+            );
         }
     }
 
@@ -138,8 +146,17 @@ public class MembershipTypesController {
         alert.setContentText("Тип абонемента \"" + selected.getName() + "\" буде деактивований.");
 
         if (alert.showAndWait().filter(ButtonType.OK::equals).isPresent()) {
-            membershipTypeService.deactivate(selected.getId());
-            loadMembershipTypes();
+            try {
+                membershipTypeService.deactivate(selected.getId());
+                loadMembershipTypes();
+            } catch (Exception e) {
+                ErrorHandler.handle(
+                        ErrorLogMessages.MEMBERSHIP_TYPE_DEACTIVATE,
+                        UserErrorMessages.MEMBERSHIP_TYPE_DEACTIVATE_FAILED,
+                        "membershipTypeId=" + selected.getId() + ", name=" + selected.getName(),
+                        e
+                );
+            }
         }
     }
 
@@ -156,13 +173,30 @@ public class MembershipTypesController {
         alert.setContentText("Тип абонемента \"" + selected.getName() + "\" буде реактивований.");
 
         if (alert.showAndWait().filter(ButtonType.OK::equals).isPresent()) {
-            membershipTypeService.reactivate(selected.getId());
-            loadMembershipTypes();
+            try {
+                membershipTypeService.reactivate(selected.getId());
+                loadMembershipTypes();
+            } catch (Exception e) {
+                ErrorHandler.handle(
+                        ErrorLogMessages.MEMBERSHIP_TYPE_REACTIVATE,
+                        UserErrorMessages.MEMBERSHIP_TYPE_REACTIVATE_FAILED,
+                        "membershipTypeId=" + selected.getId() + ", name=" + selected.getName(),
+                        e
+                );
+            }
         }
     }
 
     private void loadMembershipTypes() {
-        List<MembershipType> membershipTypes = membershipTypeService.findAll();
-        membershipTypesTable.setItems(FXCollections.observableArrayList(membershipTypes));
+        try {
+            List<MembershipType> membershipTypes = membershipTypeService.findAll();
+            membershipTypesTable.setItems(FXCollections.observableArrayList(membershipTypes));
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.MEMBERSHIP_TYPES_LOAD,
+                    UserErrorMessages.MEMBERSHIP_TYPES_LOAD_FAILED,
+                    e
+            );
+        }
     }
 }

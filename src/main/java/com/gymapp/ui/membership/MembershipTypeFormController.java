@@ -1,11 +1,12 @@
 package com.gymapp.ui.membership;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
+import com.gymapp.context.AppContext;
 import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.db.domain.VisitPolicy;
-import com.gymapp.db.ConnectionFactory;
-import com.gymapp.db.SqliteConnectionFactory;
-import com.gymapp.membership.db.SqliteMembershipTypeRepository;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -24,9 +25,7 @@ public class MembershipTypeFormController {
     private MembershipType editingMembershipType;
 
     public MembershipTypeFormController() {
-        ConnectionFactory connectionFactory = new SqliteConnectionFactory();
-        SqliteMembershipTypeRepository repository = new SqliteMembershipTypeRepository(connectionFactory);
-        this.membershipTypeService = new MembershipTypeService(repository);
+        this.membershipTypeService = AppContext.membershipTypeService();
     }
 
     @FXML
@@ -105,20 +104,29 @@ public class MembershipTypeFormController {
             return;
         }
 
-        if (editingMembershipType == null) {
-            MembershipType membershipType = new MembershipType();
-            fillMembershipTypeFromForm(membershipType);
-            membershipTypeService.save(membershipType);
-        } else {
-            fillMembershipTypeFromForm(editingMembershipType);
-            membershipTypeService.update(editingMembershipType);
-        }
+        try {
+            if (editingMembershipType == null) {
+                MembershipType membershipType = new MembershipType();
+                fillMembershipTypeFromForm(membershipType);
+                membershipTypeService.save(membershipType);
+            } else {
+                fillMembershipTypeFromForm(editingMembershipType);
+                membershipTypeService.update(editingMembershipType);
+            }
 
-        if (onMembershipTypeSaved != null) {
-            onMembershipTypeSaved.run();
-        }
+            if (onMembershipTypeSaved != null) {
+                onMembershipTypeSaved.run();
+            }
 
-        closeWindow();
+            closeWindow();
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.MEMBERSHIP_TYPE_FORM_SAVE,
+                    UserErrorMessages.MEMBERSHIP_TYPE_SAVE_FAILED,
+                    buildMembershipTypeFormErrorDetails(),
+                    e
+            );
+        }
     }
 
     @FXML
@@ -218,6 +226,17 @@ public class MembershipTypeFormController {
         }
 
         return null;
+    }
+
+    private String buildMembershipTypeFormErrorDetails() {
+        return "mode=" + (editingMembershipType == null ? "CREATE" : "UPDATE")
+                + ", membershipTypeId=" + (editingMembershipType != null ? editingMembershipType.getId() : null)
+                + ", name=" + valueOrEmpty(nameField.getText()).trim()
+                + ", visitPolicy=" + visitPolicyBox.getValue()
+                + ", durationDays=" + valueOrEmpty(durationDaysField.getText()).trim()
+                + ", visitLimit=" + valueOrEmpty(visitLimitField.getText()).trim()
+                + ", price=" + valueOrEmpty(priceField.getText()).trim()
+                + ", active=" + activeCheckBox.isSelected();
     }
 
     private void updateFieldsState() {

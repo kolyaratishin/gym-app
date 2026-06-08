@@ -1,5 +1,7 @@
 package com.gymapp.backup;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -60,6 +62,11 @@ public class BackupSettingsService {
 
             return properties;
         } catch (IOException e) {
+            ErrorHandler.logOnly(
+                    ErrorLogMessages.BACKUP_SETTINGS_LOAD,
+                    "settingsFile=" + settingsFile,
+                    e
+            );
             throw new RuntimeException("Failed to load backup settings", e);
         }
     }
@@ -72,6 +79,11 @@ public class BackupSettingsService {
                 properties.store(outputStream, "Gym App settings");
             }
         } catch (IOException e) {
+            ErrorHandler.logOnly(
+                    ErrorLogMessages.BACKUP_SETTINGS_SAVE,
+                    "settingsFile=" + settingsFile,
+                    e
+            );
             throw new RuntimeException("Failed to save backup settings", e);
         }
     }

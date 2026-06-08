@@ -1,5 +1,8 @@
 package com.gymapp.ui.common;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.backup.BackupService;
 import com.gymapp.context.AppContext;
 import javafx.collections.FXCollections;
@@ -60,7 +63,16 @@ public class RestoreBackupController {
 
             close();
         } catch (Exception e) {
-            errorLabel.setText("Помилка відновлення: " + e.getMessage());
+            errorLabel.setText("Помилка відновлення. Деталі записані у журнал помилок.");
+            ErrorHandler.logOnly(
+                    ErrorLogMessages.RESTORE_BACKUP_DIALOG_RESTORE,
+                    "backupFile=" + selectedBackup,
+                    e
+            );
+            DialogService.showInfo(
+                    "Помилка",
+                    UserErrorMessages.BACKUP_RESTORE_FAILED + UserErrorMessages.DETAILS_IN_ERROR_LOG
+            );
         }
     }
 

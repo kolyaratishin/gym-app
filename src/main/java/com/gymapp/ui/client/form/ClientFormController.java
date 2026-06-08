@@ -1,5 +1,8 @@
 package com.gymapp.ui.client.form;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.client.db.Client;
 import com.gymapp.client.service.ClientService;
 import com.gymapp.context.AppContext;
@@ -74,14 +77,23 @@ public class ClientFormController {
             return;
         }
 
-        if (isEditMode()) {
-            updateClient();
-        } else {
-            createClient();
-        }
+        try {
+            if (isEditMode()) {
+                updateClient();
+            } else {
+                createClient();
+            }
 
-        notifyClientSaved();
-        closeWindow();
+            notifyClientSaved();
+            closeWindow();
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_FORM_SAVE,
+                    UserErrorMessages.CLIENT_SAVE_FAILED,
+                    buildClientFormErrorDetails(),
+                    e
+            );
+        }
     }
 
     @FXML
@@ -123,8 +135,6 @@ public class ClientFormController {
         String lastName = getTrimmedText(lastNameField);
         String phone = getTrimmedText(phoneField);
 
-        int parsedClientNumber = Integer.parseInt(clientNumber);
-
         if (clientNumber.isEmpty()) {
             return "Номер клієнта є обов'язковим";
         }
@@ -132,6 +142,8 @@ public class ClientFormController {
         if (!isInteger(clientNumber)) {
             return "Номер клієнта має бути числом";
         }
+
+        int parsedClientNumber = Integer.parseInt(clientNumber);
 
         if (isClientNumberAlreadyUsed(parsedClientNumber)) {
             return "Клієнт з таким номером вже існує";
@@ -174,6 +186,14 @@ public class ClientFormController {
 
     private void showError(String message) {
         errorLabel.setText(message);
+    }
+
+    private String buildClientFormErrorDetails() {
+        return "mode=" + (isEditMode() ? "UPDATE" : "CREATE")
+                + ", clientId=" + (editingClient != null ? editingClient.getId() : null)
+                + ", clientNumber=" + getTrimmedText(clientNumberField)
+                + ", firstName=" + getTrimmedText(firstNameField)
+                + ", lastName=" + getTrimmedText(lastNameField);
     }
 
     private String getTrimmedText(TextField field) {

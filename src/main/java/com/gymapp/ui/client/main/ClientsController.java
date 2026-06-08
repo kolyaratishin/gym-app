@@ -1,5 +1,8 @@
 package com.gymapp.ui.client.main;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.client.db.Client;
 import com.gymapp.client.service.ClientService;
 import com.gymapp.context.AppContext;
@@ -152,8 +155,17 @@ public class ClientsController {
     }
 
     private void searchClients(String query) {
-        List<Client> clients = clientService.search(query);
-        setClients(clients);
+        try {
+            List<Client> clients = clientService.search(query);
+            setClients(clients);
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENTS_SEARCH,
+                    UserErrorMessages.CLIENTS_SEARCH_FAILED,
+                    "query=" + query,
+                    e
+            );
+        }
     }
 
     @FXML
@@ -185,14 +197,22 @@ public class ClientsController {
 
     @FXML
     private void onAddEmptyClient() {
-        ViewLoader.showModalAndReturnController(
-                "/fxml/client/EmptyClientFormView.fxml",
-                "Додати пустий номер",
-                0.35,
-                0.42,
-                (EmptyClientFormController controller) ->
-                        controller.setOnClientSaved(this::loadClients)
-        );
+        try {
+            ViewLoader.showModalAndReturnController(
+                    "/fxml/client/EmptyClientFormView.fxml",
+                    "Додати пустий номер",
+                    0.35,
+                    0.42,
+                    (EmptyClientFormController controller) ->
+                            controller.setOnClientSaved(this::loadClients)
+            );
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.EMPTY_CLIENT_FORM_OPEN,
+                    UserErrorMessages.CLIENT_FORM_OPEN_FAILED,
+                    e
+            );
+        }
     }
 
     @FXML
@@ -201,8 +221,16 @@ public class ClientsController {
     }
 
     private void loadClients() {
-        List<Client> clients = clientService.findAll();
-        setClients(clients);
+        try {
+            List<Client> clients = clientService.findAll();
+            setClients(clients);
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENTS_LOAD,
+                    UserErrorMessages.CLIENTS_LOAD_FAILED,
+                    e
+            );
+        }
     }
 
     private void setClients(List<Client> clients) {
@@ -214,34 +242,63 @@ public class ClientsController {
             return;
         }
 
-        Stage stage = ViewLoader.openWindow(
-                "/fxml/client/ClientDetailsView.fxml",
-                "Деталі клієнта",
-                0.72,
-                0.78,
-                (ClientDetailsController controller) -> {
-                    controller.setClient(client);
-                    controller.setOnClientUpdated(this::loadClients);
-                }
-        );
+        try {
+            Stage stage = ViewLoader.openWindow(
+                    "/fxml/client/ClientDetailsView.fxml",
+                    "Деталі клієнта",
+                    0.72,
+                    0.78,
+                    (ClientDetailsController controller) -> {
+                        controller.setClient(client);
+                        controller.setOnClientUpdated(this::loadClients);
+                    }
+            );
 
-        stage.setMaximized(true);
+            stage.setMaximized(true);
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_DETAILS_OPEN,
+                    UserErrorMessages.CLIENT_DETAILS_OPEN_FAILED,
+                    buildClientErrorDetails(client),
+                    e
+            );
+        }
     }
 
     private void openClientForm(Client client, String title) {
-        ViewLoader.openWindow(
-                "/fxml/client/ClientFormView.fxml",
-                title,
-                0.72,
-                0.64,
-                (ClientFormController controller) -> {
-                    if (client != null) {
-                        controller.setClient(client);
-                    }
+        try {
+            ViewLoader.openWindow(
+                    "/fxml/client/ClientFormView.fxml",
+                    title,
+                    0.72,
+                    0.64,
+                    (ClientFormController controller) -> {
+                        if (client != null) {
+                            controller.setClient(client);
+                        }
 
-                    controller.setOnClientSaved(this::loadClients);
-                }
-        );
+                        controller.setOnClientSaved(this::loadClients);
+                    }
+            );
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_FORM_OPEN,
+                    UserErrorMessages.CLIENT_FORM_OPEN_FAILED,
+                    buildClientErrorDetails(client),
+                    e
+            );
+        }
+    }
+
+    private String buildClientErrorDetails(Client client) {
+        if (client == null) {
+            return "client=null";
+        }
+
+        return "clientId=" + client.getId()
+                + ", clientNumber=" + client.getClientNumber()
+                + ", firstName=" + client.getFirstName()
+                + ", lastName=" + client.getLastName();
     }
 
     private Client getSelectedClient() {
@@ -340,9 +397,18 @@ public class ClientsController {
                     return;
                 }
 
-                String resultMessage = visitService.registerVisit(client.getId());
-                DialogService.showInfoDialog("Реєстрація відвідування", resultMessage);
-                loadClients();
+                try {
+                    String resultMessage = visitService.registerVisit(client.getId());
+                    DialogService.showInfoDialog("Реєстрація відвідування", resultMessage);
+                    loadClients();
+                } catch (Exception e) {
+                    ErrorHandler.handle(
+                            ErrorLogMessages.CLIENT_VISIT_REGISTER_FROM_TABLE,
+                            UserErrorMessages.VISIT_REGISTER_FAILED,
+                            buildClientErrorDetails(client),
+                            e
+                    );
+                }
             });
         }
 

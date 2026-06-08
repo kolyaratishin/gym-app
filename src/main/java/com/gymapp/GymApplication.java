@@ -1,5 +1,7 @@
 package com.gymapp;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
 import com.gymapp.audit.GlobalExceptionHandler;
 import com.gymapp.backup.BackupService;
 import com.gymapp.context.AppContext;
@@ -10,19 +12,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 
 public class GymApplication extends Application {
 
     private final BackupService backupService = AppContext.backupService();
 
     public static void main(String[] args) {
-        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> logError("Uncaught exception", throwable));
+        GlobalExceptionHandler.install();
         launch(args);
     }
 
@@ -53,7 +49,7 @@ public class GymApplication extends Application {
 
             stage.show();
         } catch (Throwable e) {
-            logError("Failed to start application", e);
+            ErrorHandler.logOnly(ErrorLogMessages.APPLICATION_START, e);
             throw new RuntimeException(e);
         }
     }
@@ -63,7 +59,7 @@ public class GymApplication extends Application {
             backupService.createLocalBackup();
             System.out.println("Startup backup created");
         } catch (Exception e) {
-            System.out.println("Startup backup failed: " + e.getMessage());
+            ErrorHandler.logOnly(ErrorLogMessages.APPLICATION_STARTUP_BACKUP, e);
         }
     }
 
@@ -72,30 +68,7 @@ public class GymApplication extends Application {
             backupService.createLocalBackup();
             System.out.println("Shutdown backup created");
         } catch (Exception e) {
-            System.out.println("Shutdown backup failed: " + e.getMessage());
-        }
-    }
-
-    private static void logError(String message, Throwable throwable) {
-        try {
-            Path logDir = Paths.get(System.getProperty("user.home"), "GymApp", "logs");
-            Files.createDirectories(logDir);
-
-            Path logFile = logDir.resolve("startup-error.log");
-
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            pw.println(message);
-            throwable.printStackTrace(pw);
-            pw.println("--------------------------------------------------");
-
-            Files.writeString(
-                    logFile,
-                    sw.toString(),
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.APPEND
-            );
-        } catch (Exception ignored) {
+            ErrorHandler.logOnly(ErrorLogMessages.APPLICATION_SHUTDOWN_BACKUP, e);
         }
     }
 }

@@ -1,5 +1,8 @@
 package com.gymapp.ui.database;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.backup.BackupService;
 import com.gymapp.context.AppContext;
 import com.gymapp.ui.common.DialogService;
@@ -45,9 +48,10 @@ public class DatabaseController {
 
             backupStatusLabel.setText("Копію створено: " + backupFile.toAbsolutePath());
         } catch (Exception e) {
-            DialogService.showInfo(
-                    "Помилка",
-                    "Не вдалося створити резервну копію:\n" + e.getMessage()
+            ErrorHandler.handle(
+                    ErrorLogMessages.DATABASE_CREATE_BACKUP,
+                    UserErrorMessages.BACKUP_CREATE_FAILED,
+                    e
             );
         }
     }
@@ -67,23 +71,40 @@ public class DatabaseController {
 
     @FXML
     private void onSaveExtraBackupPath() {
-        backupService.saveExtraBackupPath(extraBackupPathField.getText());
+        try {
+            backupService.saveExtraBackupPath(extraBackupPathField.getText());
 
-        DialogService.showInfo(
-                "Налаштування",
-                "Шлях для додаткової копії збережено."
-        );
+            DialogService.showInfo(
+                    "Налаштування",
+                    "Шлях для додаткової копії збережено."
+            );
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.DATABASE_SAVE_EXTRA_BACKUP_PATH,
+                    UserErrorMessages.BACKUP_SETTINGS_SAVE_FAILED,
+                    "path=" + extraBackupPathField.getText(),
+                    e
+            );
+        }
     }
 
     @FXML
     private void onClearExtraBackupPath() {
-        extraBackupPathField.clear();
-        backupService.clearExtraBackupPath();
+        try {
+            extraBackupPathField.clear();
+            backupService.clearExtraBackupPath();
 
-        DialogService.showInfo(
-                "Налаштування",
-                "Додатковий шлях очищено."
-        );
+            DialogService.showInfo(
+                    "Налаштування",
+                    "Додатковий шлях очищено."
+            );
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.DATABASE_CLEAR_EXTRA_BACKUP_PATH,
+                    UserErrorMessages.BACKUP_SETTINGS_CLEAR_FAILED,
+                    e
+            );
+        }
     }
 
     @FXML
@@ -120,9 +141,11 @@ public class DatabaseController {
                     "Базу даних успішно відновлено.\nРекомендується перезапустити додаток."
             );
         } catch (Exception e) {
-            DialogService.showInfo(
-                    "Помилка",
-                    "Не вдалося відновити базу:\n" + e.getMessage()
+            ErrorHandler.handle(
+                    ErrorLogMessages.DATABASE_RESTORE_BACKUP,
+                    UserErrorMessages.BACKUP_RESTORE_FAILED,
+                    "backupFile=" + selectedFile.getAbsolutePath(),
+                    e
             );
         }
     }

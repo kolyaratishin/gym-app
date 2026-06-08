@@ -1,5 +1,8 @@
 package com.gymapp.ui.client.mebmership;
 
+import com.gymapp.audit.ErrorHandler;
+import com.gymapp.audit.ErrorLogMessages;
+import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.client.db.Client;
 import com.gymapp.context.AppContext;
 import com.gymapp.membership.db.domain.MembershipType;
@@ -164,9 +167,18 @@ public class ClientMembershipFormController {
             return;
         }
 
-        saveMembership();
-        notifyMembershipSaved();
-        closeWindow();
+        try {
+            saveMembership();
+            notifyMembershipSaved();
+            closeWindow();
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.MEMBERSHIP_FORM_SAVE,
+                    UserErrorMessages.MEMBERSHIP_SAVE_FAILED,
+                    buildMembershipSaveErrorDetails(),
+                    e
+            );
+        }
     }
 
     @FXML
@@ -175,10 +187,19 @@ public class ClientMembershipFormController {
     }
 
     private void loadMembershipTypes() {
-        List<MembershipType> activeTypes = membershipTypeService.findActive();
-        List<MembershipType> allowedTypes = filterMembershipTypesByAge(activeTypes);
+        try {
+            List<MembershipType> activeTypes = membershipTypeService.findActive();
+            List<MembershipType> allowedTypes = filterMembershipTypesByAge(activeTypes);
 
-        membershipTypeBox.setItems(FXCollections.observableArrayList(allowedTypes));
+            membershipTypeBox.setItems(FXCollections.observableArrayList(allowedTypes));
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.MEMBERSHIP_FORM_LOAD_TYPES,
+                    UserErrorMessages.MEMBERSHIP_FORM_LOAD_FAILED,
+                    buildClientErrorDetails(),
+                    e
+            );
+        }
     }
 
     private List<MembershipType> filterMembershipTypesByAge(List<MembershipType> types) {
@@ -212,9 +233,18 @@ public class ClientMembershipFormController {
     }
 
     private void loadCurrentMembership() {
-        currentViewBinder.showCurrentMembership(
-                membershipService.findActiveByClientId(client.getId())
-        );
+        try {
+            currentViewBinder.showCurrentMembership(
+                    membershipService.findActiveByClientId(client.getId())
+            );
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.MEMBERSHIP_FORM_LOAD_CURRENT,
+                    UserErrorMessages.MEMBERSHIP_FORM_LOAD_FAILED,
+                    buildClientErrorDetails(),
+                    e
+            );
+        }
     }
 
     private String validateForm() {
@@ -237,6 +267,23 @@ public class ClientMembershipFormController {
                 endDatePicker.getValue(),
                 parseRemainingVisitsOrNull()
         );
+    }
+
+    private String buildMembershipSaveErrorDetails() {
+        MembershipType selectedType = getSelectedType();
+        return buildClientErrorDetails()
+                + ", membershipTypeId=" + (selectedType != null ? selectedType.getId() : null)
+                + ", membershipTypeName=" + (selectedType != null ? selectedType.getName() : null)
+                + ", startDate=" + startDatePicker.getValue()
+                + ", manualMode=" + isManualMode()
+                + ", endDate=" + endDatePicker.getValue()
+                + ", remainingVisits=" + remainingVisitsField.getText();
+    }
+
+    private String buildClientErrorDetails() {
+        return "clientId=" + (client != null ? client.getId() : null)
+                + ", clientNumber=" + (client != null ? client.getClientNumber() : null)
+                + ", clientName=" + (client != null ? client.getFirstName() + " " + client.getLastName() : null);
     }
 
     private void notifyMembershipSaved() {
