@@ -48,6 +48,9 @@ public class MainController {
     private Button databaseButton;
 
     @FXML
+    private Button auditButton;
+
+    @FXML
     public void initialize() {
         loadView("/fxml/dashboard/DashboardView.fxml");
         setActiveNavButton(dashboardButton);
@@ -75,6 +78,12 @@ public class MainController {
     private void showDatabase() {
         loadView("/fxml/database/DatabaseView.fxml");
         setActiveNavButton(databaseButton);
+    }
+
+    @FXML
+    private void showAudit() {
+        loadView("/fxml/audit/AuditLogView.fxml");
+        setActiveNavButton(auditButton);
     }
 
     @FXML
@@ -219,6 +228,7 @@ public class MainController {
         clientsButton.getStyleClass().remove("nav-button-active");
         membershipTypesButton.getStyleClass().remove("nav-button-active");
         databaseButton.getStyleClass().remove("nav-button-active");
+        auditButton.getStyleClass().remove("nav-button-active");
 
         if (activeButton != null && !activeButton.getStyleClass().contains("nav-button-active")) {
             activeButton.getStyleClass().add("nav-button-active");

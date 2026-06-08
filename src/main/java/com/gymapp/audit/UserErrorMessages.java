@@ -30,6 +30,8 @@ public final class UserErrorMessages {
     public static final String BACKUP_SETTINGS_SAVE_FAILED = "Не вдалося зберегти налаштування резервної копії.";
     public static final String BACKUP_SETTINGS_CLEAR_FAILED = "Не вдалося очистити додатковий шлях для резервної копії.";
 
+    public static final String LOGS_LOAD_FAILED = "Не вдалося завантажити журнал.";
+    public static final String LOG_FOLDER_OPEN_FAILED = "Не вдалося відкрити папку з журналами.";
     public static final String VIEW_LOAD_FAILED = "Не вдалося відкрити сторінку.";
     public static final String EXPORT_CLIENTS_FAILED = "Не вдалося експортувати клієнтів.";
     public static final String IMPORT_CLIENTS_FAILED = "Не вдалося імпортувати клієнтів.";

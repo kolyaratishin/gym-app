@@ -42,6 +42,11 @@ public final class ErrorLogMessages {
     public static final String MAIN_SHOW_IMPORT_RESULT = "MainController.showImportResultDialog";
     public static final String MAIN_SHOW_INFO_DIALOG = "MainController.showInfoDialog";
 
+
+    public static final String AUDIT_LOAD_ACTIVITY = "AuditLogController.loadActivityLogs";
+    public static final String AUDIT_LOAD_ERRORS = "AuditLogController.loadErrorLogs";
+    public static final String AUDIT_OPEN_LOG_FOLDER = "AuditLogController.openLogsFolder";
+
     public static final String VIEW_LOADER_LOAD_VIEW = "ViewLoader.loadView";
     public static final String APPLICATION_START = "GymApplication.start";
     public static final String APPLICATION_STARTUP_BACKUP = "GymApplication.createStartupBackupSilently";

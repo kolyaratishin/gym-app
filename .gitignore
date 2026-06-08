@@ -42,3 +42,5 @@ build/л
 /launcher/Gym_App/gym.db
 /backups
 /gym.db
+/logs
+/launcher/Gym_App/logs
