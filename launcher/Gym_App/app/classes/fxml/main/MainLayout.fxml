@@ -37,6 +37,12 @@
                     maxWidth="Infinity"
                     onAction="#showDatabase"
                     styleClass="nav-button"/>
+
+            <Button fx:id="auditButton"
+                    text="📋 Журнал"
+                    maxWidth="Infinity"
+                    onAction="#showAudit"
+                    styleClass="nav-button"/>
             <Button fx:id="exportClientsButton"
                     text="📤  Експорт клієнтів"
                     maxWidth="Infinity"

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.gymapp.ui.audit.AuditLogController"
+            styleClass="page-root">
+
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <top>
+        <VBox spacing="8">
+            <Label text="Журнал" styleClass="page-title"/>
+            <Label text="Тут можна переглянути активність у додатку та помилки по днях."
+                   styleClass="muted-text"
+                   wrapText="true"/>
+        </VBox>
+    </top>
+
+    <center>
+        <TabPane tabClosingPolicy="UNAVAILABLE">
+            <BorderPane.margin>
+                <Insets top="24"/>
+            </BorderPane.margin>
+            <Tab text="Активність">
+                <VBox spacing="14" styleClass="section-card">
+                    <HBox spacing="10">
+                        <Label text="Дата:" styleClass="form-label"/>
+                        <DatePicker fx:id="activityDatePicker"/>
+
+                        <Button text="Оновити"
+                                onAction="#loadActivityLogs"
+                                styleClass="primary-button"/>
+
+                        <Button text="Відкрити папку логів"
+                                onAction="#openLogsFolder"/>
+                    </HBox>
+
+                    <TableView fx:id="activityTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="activityTimeColumn" text="Дата і час" prefWidth="170"/>
+                            <TableColumn fx:id="activityTypeColumn" text="Подія" prefWidth="240"/>
+                            <TableColumn fx:id="activityDescriptionColumn" text="Опис" prefWidth="720"/>
+                        </columns>
+                    </TableView>
+
+                    <Label fx:id="activityStatusLabel" styleClass="muted-text"/>
+                </VBox>
+            </Tab>
+
+            <Tab text="Помилки">
+                <VBox spacing="14" styleClass="section-card">
+                    <HBox spacing="10">
+                        <Label text="Дата:" styleClass="form-label"/>
+                        <DatePicker fx:id="errorDatePicker"/>
+
+                        <Button text="Оновити"
+                                onAction="#loadErrorLogs"
+                                styleClass="primary-button"/>
+
+                        <Button text="Відкрити папку логів"
+                                onAction="#openLogsFolder"/>
+                    </HBox>
+
+                    <SplitPane dividerPositions="0.55" VBox.vgrow="ALWAYS">
+                        <TableView fx:id="errorTable">
+                            <columns>
+                                <TableColumn fx:id="errorTimeColumn" text="Дата і час" prefWidth="160"/>
+                                <TableColumn fx:id="errorSourceColumn" text="Місце" prefWidth="300"/>
+                                <TableColumn fx:id="errorTypeColumn" text="Тип" prefWidth="250"/>
+                                <TableColumn fx:id="errorMessageColumn" text="Повідомлення" prefWidth="360"/>
+                            </columns>
+                        </TableView>
+
+                        <VBox spacing="8">
+                            <Label text="Деталі помилки" styleClass="section-title"/>
+                            <TextArea fx:id="errorDetailsArea"
+                                      editable="false"
+                                      wrapText="false"
+                                      VBox.vgrow="ALWAYS"/>
+                        </VBox>
+                    </SplitPane>
+
+                    <Label fx:id="errorStatusLabel" styleClass="muted-text"/>
+                </VBox>
+            </Tab>
+        </TabPane>
+    </center>
+</BorderPane>

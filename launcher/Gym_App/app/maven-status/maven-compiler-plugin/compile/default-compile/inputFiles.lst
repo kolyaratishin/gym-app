@@ -1,4 +1,16 @@
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\AppLauncher.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\ActivityLogger.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\AuditEventType.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\AuditLogMessages.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\dto\ActivityLogEntry.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\dto\ErrorLogEntry.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\ErrorHandler.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\ErrorLogger.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\ErrorLogMessages.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\GlobalExceptionHandler.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\LogFileResolver.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\service\LogReaderService.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\audit\UserErrorMessages.java
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\backup\BackupService.java
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\backup\BackupSettingsService.java
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\client\db\Client.java
@@ -32,6 +44,7 @@ C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\membership\db\Sqlit
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\membership\service\MembershipService.java
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\membership\service\MembershipTypeService.java
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\StressDataSeeder.java
+C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\ui\audit\AuditLogController.java
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\ui\client\details\ClientDetailsController.java
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\ui\client\details\ClientDetailsViewBinder.java
 C:\Users\kolya\IdeaProjects\gym-app\src\main\java\com\gymapp\ui\client\details\ClientMembershipViewBinder.java
