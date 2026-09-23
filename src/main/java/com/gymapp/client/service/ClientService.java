@@ -4,6 +4,7 @@ import com.gymapp.audit.ActivityLogger;
 import com.gymapp.audit.AuditEventType;
 import com.gymapp.client.db.Client;
 import com.gymapp.client.db.ClientRepository;
+import com.gymapp.util.PhoneNormalizer;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -61,6 +62,16 @@ public class ClientService {
 
     public boolean existsByClientNumber(Integer clientNumber) {
         return clientRepository.existsByClientNumber(clientNumber);
+    }
+
+    public Optional<Client> findByPhone(String phone) {
+        String normalizedPhone = PhoneNormalizer.normalize(phone);
+
+        if (normalizedPhone == null) {
+            return Optional.empty();
+        }
+
+        return clientRepository.findByPhone(normalizedPhone);
     }
 
     private boolean isInteger(String value) {

@@ -4,6 +4,8 @@ import com.gymapp.client.dto.ClientTableRow;
 import com.gymapp.db.BaseRepository;
 import com.gymapp.db.ConnectionFactory;
 import com.gymapp.membership.db.domain.VisitPolicy;
+import com.gymapp.util.PhoneNormalizer;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -307,6 +309,15 @@ public class SqliteClientRepository extends BaseRepository implements ClientRepo
                 },
                 this::mapClientTableRow
         );
+    }
+
+    @Override
+    public Optional<Client> findByPhone(String normalizedPhone) {
+        return findAll().stream()
+                .filter(client -> normalizedPhone.equals(
+                        PhoneNormalizer.normalize(client.getPhone())
+                ))
+                .findFirst();
     }
 
     private ClientTableRow mapClientTableRow(ResultSet rs) throws SQLException {

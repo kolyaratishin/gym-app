@@ -32,4 +32,7 @@ public interface MembershipRepository {
     void expireOutdatedMemberships(LocalDate today);
 
     long countClientsWithActiveMembership();
+
+    List<Membership> findExpiringBetween(LocalDate from, LocalDate to);
+    List<Membership> findExpired();
 }

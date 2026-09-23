@@ -1,19 +1,17 @@
 package com.gymapp.ui.dashboard;
 
+import com.gymapp.client.db.SqliteClientRepository;
 import com.gymapp.dashboard.db.DashboardAnalyticsRepository;
 import com.gymapp.dashboard.dto.ClientVisitStat;
-import com.gymapp.dashboard.service.DashboardAnalyticsService;
-import com.gymapp.dashboard.service.DashboardService;
 import com.gymapp.dashboard.dto.DashboardStats;
 import com.gymapp.dashboard.dto.VisitDayStat;
-import com.gymapp.membership.service.MembershipService;
+import com.gymapp.dashboard.service.DashboardAnalyticsService;
+import com.gymapp.dashboard.service.DashboardService;
 import com.gymapp.db.ConnectionFactory;
 import com.gymapp.db.SqliteConnectionFactory;
-import com.gymapp.client.db.SqliteClientRepository;
 import com.gymapp.membership.db.SqliteMembershipRepository;
+import com.gymapp.membership.service.MembershipService;
 import com.gymapp.visit.db.SqliteVisitRepository;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -24,6 +22,9 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class DashboardController {
 

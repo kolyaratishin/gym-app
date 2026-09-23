@@ -3,6 +3,18 @@ package com.gymapp.membership.db.domain;
 import java.time.LocalDate;
 
 public class Membership {
+    @Override
+    public String toString() {
+        return "Membership{" +
+                "id=" + id +
+                ", clientId=" + clientId +
+                ", membershipTypeId=" + membershipTypeId +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                ", remainingVisits=" + remainingVisits +
+                ", status=" + status +
+                '}';
+    }
 
     private Long id;
     private Long clientId;

@@ -28,9 +28,11 @@ public interface ClientRepository {
 
     boolean existsByClientNumber(Integer clientNumber);
 
-    public List<ClientTableRow> findAllTableRows();
+    List<ClientTableRow> findAllTableRows();
 
-    public List<ClientTableRow> findTableRowsByClientNumber(Integer clientNumber);
+    List<ClientTableRow> findTableRowsByClientNumber(Integer clientNumber);
 
-    public List<ClientTableRow> searchTableRowsByText(String text);
+    List<ClientTableRow> searchTableRowsByText(String text);
+
+    Optional<Client> findByPhone(String normalizedPhone);
 }

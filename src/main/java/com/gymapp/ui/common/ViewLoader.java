@@ -4,6 +4,7 @@ import com.gymapp.audit.ErrorHandler;
 import com.gymapp.audit.ErrorLogMessages;
 import com.gymapp.util.GymAppUtils;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -24,12 +25,18 @@ public final class ViewLoader {
             double heightRatio,
             Consumer<T> controllerConfigurer
     ) {
-        LoadedView<T> loadedView = loadView(fxmlPath, controllerConfigurer);
+        LoadedView<T> loadedView =
+                load(fxmlPath, controllerConfigurer);
 
         Stage stage = new Stage();
-        GymAppUtils.applyResponsiveStageSize(stage, widthRatio, heightRatio);
+        GymAppUtils.applyResponsiveStageSize(
+                stage,
+                widthRatio,
+                heightRatio
+        );
+
         stage.setTitle(title);
-        stage.setScene(loadedView.scene());
+        stage.setScene(createScene(loadedView.root()));
         stage.show();
 
         return stage;
@@ -42,28 +49,39 @@ public final class ViewLoader {
             double heightRatio,
             Consumer<T> controllerConfigurer
     ) {
-        LoadedView<T> loadedView = loadView(fxmlPath, controllerConfigurer);
+        LoadedView<T> loadedView =
+                load(fxmlPath, controllerConfigurer);
 
         Stage stage = new Stage();
-        GymAppUtils.applyResponsiveStageSize(stage, widthRatio, heightRatio);
+
+        GymAppUtils.applyResponsiveStageSize(
+                stage,
+                widthRatio,
+                heightRatio
+        );
+
         stage.setTitle(title);
         stage.initModality(Modality.APPLICATION_MODAL);
-        stage.setScene(loadedView.scene());
+        stage.setScene(createScene(loadedView.root()));
         stage.setResizable(false);
         stage.showAndWait();
 
         return loadedView.controller();
     }
 
-    private static <T> LoadedView<T> loadView(
+    public static Parent loadContent(String fxmlPath) {
+        return load(fxmlPath, null).root();
+    }
+
+    private static <T> LoadedView<T> load(
             String fxmlPath,
             Consumer<T> controllerConfigurer
     ) {
         try {
-            FXMLLoader loader = new FXMLLoader(ViewLoader.class.getResource(fxmlPath));
+            FXMLLoader loader =
+                    new FXMLLoader(ViewLoader.class.getResource(fxmlPath));
 
-            Scene scene = new Scene(loader.load());
-            scene.getStylesheets().add(ViewLoader.class.getResource(APP_CSS).toExternalForm());
+            Parent root = loader.load();
 
             T controller = loader.getController();
 
@@ -71,17 +89,37 @@ public final class ViewLoader {
                 controllerConfigurer.accept(controller);
             }
 
-            return new LoadedView<>(scene, controller);
+            return new LoadedView<>(root, controller);
+
         } catch (Exception e) {
             ErrorHandler.logOnly(
                     ErrorLogMessages.VIEW_LOADER_LOAD_VIEW,
                     "fxmlPath=" + fxmlPath,
                     e
             );
-            throw new RuntimeException("Failed to load view: " + fxmlPath, e);
+
+            throw new RuntimeException(
+                    "Failed to load view: " + fxmlPath,
+                    e
+            );
         }
     }
 
-    private record LoadedView<T>(Scene scene, T controller) {
+    private static Scene createScene(Parent root) {
+        Scene scene = new Scene(root);
+
+        scene.getStylesheets().add(
+                ViewLoader.class
+                        .getResource(APP_CSS)
+                        .toExternalForm()
+        );
+
+        return scene;
+    }
+
+    private record LoadedView<T>(
+            Parent root,
+            T controller
+    ) {
     }
 }

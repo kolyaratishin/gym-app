@@ -1,13 +1,13 @@
 package com.gymapp.client.service;
 
 import com.gymapp.client.db.Client;
+import com.gymapp.client.db.ClientRepository;
 import com.gymapp.client.dto.ImportResult;
+import com.gymapp.membership.db.MembershipRepository;
+import com.gymapp.membership.db.MembershipTypeRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
 import com.gymapp.membership.db.domain.MembershipType;
-import com.gymapp.client.db.ClientRepository;
-import com.gymapp.membership.db.MembershipRepository;
-import com.gymapp.membership.db.MembershipTypeRepository;
 import com.gymapp.membership.db.domain.VisitPolicy;
 
 import java.io.BufferedWriter;

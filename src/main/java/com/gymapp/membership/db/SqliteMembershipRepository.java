@@ -5,7 +5,9 @@ import com.gymapp.db.ConnectionFactory;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -209,6 +211,65 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
         return queryForLong(
                 "SELECT COUNT(DISTINCT client_id) FROM memberships WHERE status = ?",
                 ps -> ps.setString(1, MembershipStatus.ACTIVE.name())
+        );
+    }
+
+    @Override
+    public List<Membership> findExpiringBetween(LocalDate from, LocalDate to) {
+        String sql = """
+            SELECT *
+            FROM memberships
+            WHERE end_date IS NOT NULL
+              AND end_date >= ?
+              AND end_date <= ?
+              AND status = ?
+            ORDER BY end_date, id
+            """;
+
+        return query(
+                sql,
+                ps -> {
+                    ps.setString(1, from.toString());
+                    ps.setString(2, to.toString());
+                    ps.setString(3, MembershipStatus.ACTIVE.name());
+                },
+                this::mapMembership
+        );
+    }
+
+    @Override
+    public List<Membership> findExpired() {
+        String sql = """
+            SELECT m.*
+            FROM memberships m
+            WHERE m.status = ?
+              AND m.end_date IS NOT NULL
+              AND m.id = (
+                  SELECT m2.id
+                  FROM memberships m2
+                  WHERE m2.client_id = m.client_id
+                    AND m2.status = ?
+                    AND m2.end_date IS NOT NULL
+                  ORDER BY m2.end_date DESC, m2.id DESC
+                  LIMIT 1
+              )
+            ORDER BY m.end_date DESC, m.id DESC
+            """;
+
+        return query(
+                sql,
+                ps -> {
+                    ps.setString(
+                            1,
+                            MembershipStatus.EXPIRED.name()
+                    );
+
+                    ps.setString(
+                            2,
+                            MembershipStatus.EXPIRED.name()
+                    );
+                },
+                this::mapMembership
         );
     }
 

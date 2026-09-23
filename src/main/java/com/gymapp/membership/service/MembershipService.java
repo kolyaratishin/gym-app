@@ -9,6 +9,7 @@ import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.db.domain.VisitPolicy;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 public class MembershipService {
@@ -60,6 +61,14 @@ public class MembershipService {
 
     public void expireOutdatedMemberships() {
         membershipRepository.expireOutdatedMemberships(LocalDate.now());
+    }
+
+    public List<Membership> findExpiringBetween(LocalDate from, LocalDate to) {
+        return membershipRepository.findExpiringBetween(from, to);
+    }
+
+    public List<Membership> findExpired() {
+        return membershipRepository.findExpired();
     }
 
     private Membership saveNewMembership(

@@ -2,8 +2,9 @@ package com.gymapp.ui.client.details;
 
 import com.gymapp.client.db.Client;
 import com.gymapp.util.DatePickerUtils;
-import java.time.LocalDate;
 import javafx.scene.control.Label;
+
+import java.time.LocalDate;
 
 public class ClientDetailsViewBinder {
 

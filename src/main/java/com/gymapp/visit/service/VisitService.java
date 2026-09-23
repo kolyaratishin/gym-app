@@ -6,6 +6,7 @@ import com.gymapp.membership.db.domain.MembershipStatus;
 import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.db.domain.VisitPolicy;
 import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.telegram.service.TelegramNotificationService;
 import com.gymapp.visit.db.Visit;
 import com.gymapp.visit.db.VisitRepository;
 import com.gymapp.visit.dto.ClientVisitHistoryRow;
@@ -20,19 +21,23 @@ public class VisitService {
     private final VisitRepository visitRepository;
     private final MembershipRepository membershipRepository;
     private final MembershipTypeService membershipTypeService;
+    private final TelegramNotificationService telegramNotificationService;
 
     public VisitService(
             VisitRepository visitRepository,
             MembershipRepository membershipRepository,
-            MembershipTypeService membershipTypeService
+            MembershipTypeService membershipTypeService,
+            TelegramNotificationService telegramNotificationService
     ) {
         this.visitRepository = visitRepository;
         this.membershipRepository = membershipRepository;
         this.membershipTypeService = membershipTypeService;
+        this.telegramNotificationService = telegramNotificationService;
     }
 
     public String registerVisit(Long clientId) {
-        Optional<Membership> membershipOptional = membershipRepository.findActiveByClientId(clientId);
+        Optional<Membership> membershipOptional =
+                membershipRepository.findActiveByClientId(clientId);
 
         if (membershipOptional.isEmpty()) {
             return "У клієнта немає активного абонемента";
@@ -40,32 +45,51 @@ public class VisitService {
 
         Membership membership = membershipOptional.get();
 
-        Optional<MembershipType> membershipTypeOptional = membershipTypeService.findById(membership.getMembershipTypeId());
+        Optional<MembershipType> membershipTypeOptional =
+                membershipTypeService.findById(
+                        membership.getMembershipTypeId()
+                );
+
         if (membershipTypeOptional.isEmpty()) {
             return "Не знайдено тип абонемента";
         }
 
-        MembershipType membershipType = membershipTypeOptional.get();
+        MembershipType membershipType =
+                membershipTypeOptional.get();
 
         if (isExpiredByDate(membership)) {
             membership.setStatus(MembershipStatus.EXPIRED);
             membershipRepository.update(membership);
+
             return "Абонемент клієнта вже прострочений";
         }
 
-        if (membershipType.getVisitPolicy() == VisitPolicy.LIMITED_BY_VISITS) {
-            Integer remainingVisits = membership.getRemainingVisits();
+        if (membershipType.getVisitPolicy()
+                == VisitPolicy.LIMITED_BY_VISITS) {
 
-            if (remainingVisits == null || remainingVisits <= 0) {
-                membership.setStatus(MembershipStatus.EXPIRED);
+            Integer remainingVisits =
+                    membership.getRemainingVisits();
+
+            if (remainingVisits == null
+                    || remainingVisits <= 0) {
+
+                membership.setStatus(
+                        MembershipStatus.EXPIRED
+                );
+
                 membershipRepository.update(membership);
+
                 return "У клієнта закінчилися відвідування";
             }
 
-            membership.setRemainingVisits(remainingVisits - 1);
+            membership.setRemainingVisits(
+                    remainingVisits - 1
+            );
 
             if (membership.getRemainingVisits() == 0) {
-                membership.setStatus(MembershipStatus.EXPIRED);
+                membership.setStatus(
+                        MembershipStatus.EXPIRED
+                );
             }
 
             membershipRepository.update(membership);
@@ -78,27 +102,64 @@ public class VisitService {
 
         visitRepository.save(visit);
 
+        sendLowVisitsNotificationSilently(
+                membership,
+                membershipType
+        );
+
         return "Відвідування успішно зареєстровано";
     }
 
-    public Boolean hasVisitToday(Long clientId)
-    {
+    private void sendLowVisitsNotificationSilently(
+            Membership membership,
+            MembershipType membershipType
+    ) {
+        if (telegramNotificationService == null) {
+            return;
+        }
+        if (membershipType.getVisitPolicy()
+                != VisitPolicy.LIMITED_BY_VISITS) {
+            return;
+        }
+
+        try {
+            telegramNotificationService
+                    .sendLowVisitsNotification(membership);
+        } catch (Exception e) {
+            System.err.println(
+                    "Failed to send low visits Telegram notification "
+                            + "for membershipId="
+                            + membership.getId()
+            );
+
+            e.printStackTrace();
+        }
+    }
+
+    public Boolean hasVisitToday(Long clientId) {
         return visitRepository.hasVisitToday(clientId);
     }
 
-    private boolean isExpiredByDate(Membership membership) {
+    private boolean isExpiredByDate(
+            Membership membership
+    ) {
         if (membership.getEndDate() == null) {
             return false;
         }
 
-        return membership.getEndDate().isBefore(LocalDate.now());
+        return membership.getEndDate()
+                .isBefore(LocalDate.now());
     }
 
     public List<Visit> findByClientId(Long clientId) {
         return visitRepository.findByClientId(clientId);
     }
 
-    public List<ClientVisitHistoryRow> findHistoryByClientId(Long clientId) {
-        return visitRepository.findHistoryByClientId(clientId);
+    public List<ClientVisitHistoryRow> findHistoryByClientId(
+            Long clientId
+    ) {
+        return visitRepository.findHistoryByClientId(
+                clientId
+        );
     }
 }

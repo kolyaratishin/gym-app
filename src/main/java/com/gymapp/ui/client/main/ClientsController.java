@@ -17,15 +17,15 @@ import com.gymapp.ui.common.DialogService;
 import com.gymapp.ui.common.ViewLoader;
 import com.gymapp.util.DatePickerUtils;
 import com.gymapp.visit.service.VisitService;
-import java.util.List;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+
+import java.util.List;
 
 public class ClientsController {
 
@@ -399,7 +399,7 @@ public class ClientsController {
 
                 try {
                     String resultMessage = visitService.registerVisit(client.getId());
-                    DialogService.showInfoDialog("Реєстрація відвідування", resultMessage);
+                    DialogService.showInfo("Реєстрація відвідування", resultMessage);
                     loadClients();
                 } catch (Exception e) {
                     ErrorHandler.handle(

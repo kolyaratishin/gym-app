@@ -24,16 +24,6 @@ public final class DialogService {
                 title,
                 0.35,
                 0.35,
-                (InfoDialogController controller) -> controller.setData(title, message)
-        );
-    }
-
-    public static void showInfoDialog(String title, String message) {
-        ViewLoader.showModalAndReturnController(
-                "/fxml/common/InfoDialogView.fxml",
-                title,
-                0.35,
-                0.35,
                 (InfoDialogController controller) ->
                         controller.setData(title, message)
         );

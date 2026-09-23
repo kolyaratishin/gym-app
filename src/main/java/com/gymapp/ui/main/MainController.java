@@ -3,34 +3,23 @@ package com.gymapp.ui.main;
 import com.gymapp.audit.ErrorHandler;
 import com.gymapp.audit.ErrorLogMessages;
 import com.gymapp.audit.UserErrorMessages;
-import com.gymapp.client.db.SqliteClientRepository;
 import com.gymapp.client.dto.ImportResult;
 import com.gymapp.client.service.ClientCsvService;
-import com.gymapp.membership.db.SqliteMembershipRepository;
-import com.gymapp.membership.db.SqliteMembershipTypeRepository;
+import com.gymapp.context.AppContext;
+import com.gymapp.ui.common.DialogService;
 import com.gymapp.ui.common.ImportResultController;
-import com.gymapp.ui.common.InfoDialogController;
-import java.io.File;
+import com.gymapp.ui.common.ViewLoader;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import java.io.File;
+
 public class MainController {
-    private final com.gymapp.db.ConnectionFactory connectionFactory =
-            new com.gymapp.db.SqliteConnectionFactory();
 
     private final ClientCsvService clientCsvService =
-            new ClientCsvService(
-                    new SqliteClientRepository(connectionFactory),
-                    new SqliteMembershipRepository(connectionFactory),
-                    new SqliteMembershipTypeRepository(connectionFactory)
-            );
+            AppContext.clientCsvService();
 
     @FXML
     private StackPane contentPane;
@@ -45,15 +34,31 @@ public class MainController {
     private Button membershipTypesButton;
 
     @FXML
+    private Button telegramButton;
+
+    @FXML
     private Button databaseButton;
 
     @FXML
     private Button auditButton;
 
     @FXML
+    private Button settingsButton;
+
+    @FXML
     public void initialize() {
+        configureTelegramFeature();
+
         loadView("/fxml/dashboard/DashboardView.fxml");
         setActiveNavButton(dashboardButton);
+    }
+
+    private void configureTelegramFeature() {
+        boolean telegramEnabled =
+                AppContext.isTelegramEnabled();
+
+        telegramButton.setVisible(telegramEnabled);
+        telegramButton.setManaged(telegramEnabled);
     }
 
     @FXML
@@ -75,6 +80,16 @@ public class MainController {
     }
 
     @FXML
+    private void showTelegram() {
+        if (!AppContext.isTelegramEnabled()) {
+            return;
+        }
+
+        loadView("/fxml/telegram/TelegramView.fxml");
+        setActiveNavButton(telegramButton);
+    }
+
+    @FXML
     private void showDatabase() {
         loadView("/fxml/database/DatabaseView.fxml");
         setActiveNavButton(databaseButton);
@@ -88,26 +103,44 @@ public class MainController {
 
     @FXML
     private void exportClients() {
-        javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+        javafx.stage.FileChooser fileChooser =
+                new javafx.stage.FileChooser();
+
         fileChooser.setTitle("Експорт клієнтів у CSV");
+
         fileChooser.getExtensionFilters().add(
-                new javafx.stage.FileChooser.ExtensionFilter("CSV files", "*.csv")
+                new javafx.stage.FileChooser.ExtensionFilter(
+                        "CSV files",
+                        "*.csv"
+                )
         );
+
         fileChooser.setInitialFileName("clients-export.csv");
 
-        Window window = contentPane.getScene() != null ? contentPane.getScene().getWindow() : null;
-        File selectedFile = fileChooser.showSaveDialog(window);
+        Window window =
+                contentPane.getScene() != null
+                        ? contentPane.getScene().getWindow()
+                        : null;
+
+        File selectedFile =
+                fileChooser.showSaveDialog(window);
 
         if (selectedFile == null) {
             return;
         }
 
         try {
-            java.nio.file.Path exportedFile = clientCsvService.exportClients(selectedFile.toPath());
-            showInfoDialog(
+            java.nio.file.Path exportedFile =
+                    clientCsvService.exportClients(
+                            selectedFile.toPath()
+                    );
+
+            DialogService.showInfo(
                     "Експорт завершено",
-                    "Клієнтів успішно експортовано у файл:\n" + exportedFile
+                    "Клієнтів успішно експортовано у файл:\n"
+                            + exportedFile
             );
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.MAIN_EXPORT_CLIENTS,
@@ -120,25 +153,41 @@ public class MainController {
 
     @FXML
     private void importClients() {
-        javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
+        javafx.stage.FileChooser fileChooser =
+                new javafx.stage.FileChooser();
+
         fileChooser.setTitle("Імпорт клієнтів з CSV");
+
         fileChooser.getExtensionFilters().add(
-                new javafx.stage.FileChooser.ExtensionFilter("CSV files", "*.csv")
+                new javafx.stage.FileChooser.ExtensionFilter(
+                        "CSV files",
+                        "*.csv"
+                )
         );
 
-        Window window = contentPane.getScene() != null ? contentPane.getScene().getWindow() : null;
-        File selectedFile = fileChooser.showOpenDialog(window);
+        Window window =
+                contentPane.getScene() != null
+                        ? contentPane.getScene().getWindow()
+                        : null;
+
+        File selectedFile =
+                fileChooser.showOpenDialog(window);
 
         if (selectedFile == null) {
             return;
         }
 
         try {
-            ImportResult result = clientCsvService.importClients(selectedFile.toPath());
+            ImportResult result =
+                    clientCsvService.importClients(
+                            selectedFile.toPath()
+                    );
+
             showImportResultDialog(result);
 
             loadView("/fxml/client/ClientsView.fxml");
             setActiveNavButton(clientsButton);
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.MAIN_IMPORT_CLIENTS,
@@ -149,27 +198,25 @@ public class MainController {
         }
     }
 
-    private void showImportResultDialog(ImportResult result) {
+    @FXML
+    private void showSettings() {
+        loadView("/fxml/settings/SettingsView.fxml");
+        setActiveNavButton(settingsButton);
+    }
+
+    private void showImportResultDialog(
+            ImportResult result
+    ) {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/common/ImportResultView.fxml")
+            ViewLoader.showModalAndReturnController(
+                    "/fxml/common/ImportResultView.fxml",
+                    "Результат імпорту",
+                    0.55,
+                    0.55,
+                    (ImportResultController controller) ->
+                            controller.setResult(result)
             );
 
-            Scene scene = new Scene(loader.load(), 700, 500);
-            scene.getStylesheets().add(
-                    getClass().getResource("/css/app.css").toExternalForm()
-            );
-
-            ImportResultController controller = loader.getController();
-            controller.setResult(result);
-
-            Stage stage = new Stage();
-            stage.setTitle("Результат імпорту");
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(scene);
-            stage.setMinWidth(650);
-            stage.setMinHeight(450);
-            stage.showAndWait();
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.MAIN_SHOW_IMPORT_RESULT,
@@ -181,9 +228,10 @@ public class MainController {
 
     private void loadView(String fxmlPath) {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            Parent view = loader.load();
-            contentPane.getChildren().setAll(view);
+            contentPane.getChildren().setAll(
+                    ViewLoader.loadContent(fxmlPath)
+            );
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.MAIN_LOAD_VIEW,
@@ -194,44 +242,45 @@ public class MainController {
         }
     }
 
-    private void showInfoDialog(String title, String message) {
-        try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/fxml/common/InfoDialogView.fxml")
-            );
+    private void setActiveNavButton(
+            Button activeButton
+    ) {
+        dashboardButton
+                .getStyleClass()
+                .remove("nav-button-active");
 
-            Scene scene = new Scene(loader.load(), 460, 320);
-            scene.getStylesheets().add(
-                    getClass().getResource("/css/app.css").toExternalForm()
-            );
+        clientsButton
+                .getStyleClass()
+                .remove("nav-button-active");
 
-            InfoDialogController controller = loader.getController();
-            controller.setData(title, message);
+        membershipTypesButton
+                .getStyleClass()
+                .remove("nav-button-active");
 
-            Stage stage = new Stage();
-            stage.setTitle(title);
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(scene);
-            stage.setResizable(false);
-            stage.showAndWait();
-        } catch (Exception e) {
-            ErrorHandler.logOnly(
-                    ErrorLogMessages.MAIN_SHOW_INFO_DIALOG,
-                    "title=" + title + ", message=" + message,
-                    e
-            );
-        }
-    }
+        telegramButton
+                .getStyleClass()
+                .remove("nav-button-active");
 
-    private void setActiveNavButton(Button activeButton) {
-        dashboardButton.getStyleClass().remove("nav-button-active");
-        clientsButton.getStyleClass().remove("nav-button-active");
-        membershipTypesButton.getStyleClass().remove("nav-button-active");
-        databaseButton.getStyleClass().remove("nav-button-active");
-        auditButton.getStyleClass().remove("nav-button-active");
+        databaseButton
+                .getStyleClass()
+                .remove("nav-button-active");
 
-        if (activeButton != null && !activeButton.getStyleClass().contains("nav-button-active")) {
-            activeButton.getStyleClass().add("nav-button-active");
+        auditButton
+                .getStyleClass()
+                .remove("nav-button-active");
+
+        settingsButton
+                .getStyleClass()
+                .remove("nav-button-active");
+
+        if (activeButton != null
+                && !activeButton
+                .getStyleClass()
+                .contains("nav-button-active")) {
+
+            activeButton
+                    .getStyleClass()
+                    .add("nav-button-active");
         }
     }
 }

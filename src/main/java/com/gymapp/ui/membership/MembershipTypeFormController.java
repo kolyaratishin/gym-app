@@ -4,9 +4,9 @@ import com.gymapp.audit.ErrorHandler;
 import com.gymapp.audit.ErrorLogMessages;
 import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.context.AppContext;
-import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.db.domain.VisitPolicy;
+import com.gymapp.membership.service.MembershipTypeService;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
@@ -14,9 +14,9 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
-import javafx.util.StringConverter;
 
 public class MembershipTypeFormController {
 

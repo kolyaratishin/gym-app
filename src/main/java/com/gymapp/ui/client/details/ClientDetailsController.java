@@ -8,18 +8,21 @@ import com.gymapp.context.AppContext;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.service.MembershipTypeService;
+import com.gymapp.telegram.service.TelegramMessagingService;
 import com.gymapp.ui.client.history.ClientVisitHistoryController;
 import com.gymapp.ui.client.mebmership.ClientMembershipFormController;
 import com.gymapp.ui.common.DialogService;
 import com.gymapp.ui.common.ViewLoader;
+import com.gymapp.ui.telegram.TelegramMessageController;
 import com.gymapp.visit.db.VisitRepository;
 import com.gymapp.visit.service.VisitService;
-import java.time.LocalDate;
-import java.util.Optional;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
+
+import java.time.LocalDate;
+import java.util.Optional;
 
 public class ClientDetailsController {
 
@@ -30,6 +33,7 @@ public class ClientDetailsController {
 
     private ClientDetailsViewBinder clientDetailsViewBinder;
     private ClientMembershipViewBinder membershipViewBinder;
+    private final TelegramMessagingService telegramMessagingService;
 
     @FXML
     private Label idValueLabel;
@@ -88,6 +92,12 @@ public class ClientDetailsController {
     @FXML
     private Label membershipAlertIndicatorLabel;
 
+    @FXML
+    private Label telegramStatusLabel;
+
+    @FXML
+    private Button sendTelegramButton;
+
     private Client client;
     private Runnable onClientUpdated;
 
@@ -96,6 +106,7 @@ public class ClientDetailsController {
         this.membershipTypeService = AppContext.membershipTypeService();
         this.visitService = AppContext.visitService();
         this.visitRepository = AppContext.visitRepository();
+        this.telegramMessagingService = AppContext.telegramMessagingService();
     }
 
     @FXML
@@ -141,6 +152,43 @@ public class ClientDetailsController {
 
         loadMembershipInfo(client.getId());
         updateVisitedTodayIndicator(client.getId());
+        updateTelegramState();
+    }
+
+    private void updateTelegramState() {
+        if (!AppContext.isTelegramEnabled()) {
+            applyBadgeStyle(
+                    telegramStatusLabel,
+                    "● Telegram вимкнено",
+                    "status-pill-neutral"
+            );
+
+            sendTelegramButton.setDisable(true);
+            return;
+        }
+
+        boolean connected =
+                telegramMessagingService.isTelegramConnected(
+                        client.getId()
+                );
+
+        if (connected) {
+            applyBadgeStyle(
+                    telegramStatusLabel,
+                    "● Підключено",
+                    "status-pill-success"
+            );
+
+            sendTelegramButton.setDisable(false);
+        } else {
+            applyBadgeStyle(
+                    telegramStatusLabel,
+                    "● Не підключено",
+                    "status-pill-neutral"
+            );
+
+            sendTelegramButton.setDisable(true);
+        }
     }
 
     private void loadMembershipInfo(Long clientId) {
@@ -148,6 +196,22 @@ public class ClientDetailsController {
 
         activeValueLabel.setText(membershipOptional.isPresent() ? "Так" : "Ні");
         membershipViewBinder.showMembership(membershipOptional);
+    }
+
+    @FXML
+    private void onSendTelegramMessage() {
+        if (client == null) {
+            return;
+        }
+
+        ViewLoader.openWindow(
+                "/fxml/telegram/TelegramMessageView.fxml",
+                "Telegram повідомлення",
+                0.4,
+                0.5,
+                (TelegramMessageController controller) ->
+                        controller.setClient(client)
+        );
     }
 
     @FXML
@@ -204,7 +268,7 @@ public class ClientDetailsController {
 
         try {
             String resultMessage = visitService.registerVisit(client.getId());
-            DialogService.showInfoDialog("Реєстрація відвідування", resultMessage);
+            DialogService.showInfo("Реєстрація відвідування", resultMessage);
 
             refreshClientState();
         } catch (Exception e) {
