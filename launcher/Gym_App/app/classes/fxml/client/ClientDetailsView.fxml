@@ -75,6 +75,25 @@
 
                 <Label text="Статус клієнта" styleClass="form-label" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
                 <Label fx:id="activeValueLabel" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
+
+                <Label text="Telegram"
+                       styleClass="form-label"
+                       GridPane.rowIndex="8"
+                       GridPane.columnIndex="0"/>
+
+                <HBox spacing="10"
+                      alignment="CENTER_LEFT"
+                      GridPane.rowIndex="8"
+                      GridPane.columnIndex="1">
+
+                    <Label fx:id="telegramStatusLabel"
+                           text="Не підключено"
+                           styleClass="status-pill,status-pill-neutral"/>
+
+                    <Button fx:id="sendTelegramButton"
+                            text="Надіслати повідомлення"
+                            onAction="#onSendTelegramMessage"/>
+                </HBox>
             </GridPane>
         </VBox>
 

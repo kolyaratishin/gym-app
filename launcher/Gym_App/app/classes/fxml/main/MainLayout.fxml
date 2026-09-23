@@ -32,6 +32,12 @@
                     onAction="#showMembershipTypes"
                     styleClass="nav-button"/>
 
+            <Button fx:id="telegramButton"
+                    text="✈ Telegram"
+                    maxWidth="Infinity"
+                    onAction="#showTelegram"
+                    styleClass="nav-button"/>
+
             <Button fx:id="databaseButton"
                     text="💽 База даних"
                     maxWidth="Infinity"
@@ -42,6 +48,11 @@
                     text="📋 Журнал"
                     maxWidth="Infinity"
                     onAction="#showAudit"
+                    styleClass="nav-button"/>
+            <Button fx:id="settingsButton"
+                    text="⚙ Налаштування"
+                    maxWidth="Infinity"
+                    onAction="#showSettings"
                     styleClass="nav-button"/>
             <Button fx:id="exportClientsButton"
                     text="📤  Експорт клієнтів"

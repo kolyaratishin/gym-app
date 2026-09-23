@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.gymapp.ui.settings.SettingsController"
+      spacing="24"
+      styleClass="page">
+
+    <padding>
+        <Insets top="30" right="40" bottom="30" left="40"/>
+    </padding>
+
+    <VBox spacing="5">
+        <Label text="Налаштування"
+               styleClass="page-title"/>
+
+        <Label text="Керування інтеграціями та параметрами програми"
+               styleClass="settings-page-description"/>
+    </VBox>
+
+    <VBox spacing="20"
+          maxWidth="720"
+          styleClass="settings-card">
+
+        <VBox spacing="5">
+            <Label text="Telegram"
+                   styleClass="settings-card-title"/>
+
+            <Label text="Підключіть Telegram-бота для автоматичних сповіщень клієнтів"
+                   styleClass="settings-card-description"/>
+        </VBox>
+
+        <VBox spacing="8">
+
+            <Label text="Bot token"
+                   styleClass="settings-field-label"/>
+
+            <HBox spacing="10">
+
+                <PasswordField fx:id="tokenPasswordField"
+                               promptText="Введіть Telegram Bot Token"
+                               styleClass="settings-token-field">
+                    <HBox.hgrow>
+                        <Priority fx:constant="ALWAYS"/>
+                    </HBox.hgrow>
+                </PasswordField>
+
+                <TextField fx:id="tokenTextField"
+                           promptText="Введіть Telegram Bot Token"
+                           visible="false"
+                           managed="false"
+                           styleClass="settings-token-field">
+                    <HBox.hgrow>
+                        <Priority fx:constant="ALWAYS"/>
+                    </HBox.hgrow>
+                </TextField>
+
+                <Button fx:id="showTokenButton"
+                        text="Показати"
+                        onAction="#toggleTokenVisibility"
+                        styleClass="secondary-button"/>
+
+            </HBox>
+
+        </VBox>
+
+        <HBox spacing="10"
+              alignment="CENTER_LEFT"
+              styleClass="telegram-status-box">
+
+            <Label fx:id="statusIndicator"
+                   text="●"
+                   styleClass="status-neutral"/>
+
+            <VBox spacing="2">
+                <Label fx:id="statusLabel"
+                       text="Telegram не налаштований"
+                       styleClass="telegram-status-title"/>
+
+                <Label fx:id="statusDescriptionLabel"
+                       text="Додайте токен та перевірте підключення"
+                       wrapText="true"
+                       styleClass="telegram-status-description"/>
+            </VBox>
+
+        </HBox>
+
+        <HBox spacing="10">
+
+            <Button fx:id="validateButton"
+                    text="Перевірити підключення"
+                    onAction="#validateToken"
+                    styleClass="secondary-button"/>
+
+            <Button fx:id="saveButton"
+                    text="Зберегти"
+                    disable="true"
+                    onAction="#saveToken"
+                    styleClass="primary-button"/>
+
+        </HBox>
+
+        <Separator/>
+
+        <VBox spacing="8">
+
+            <Label text="Видалення інтеграції"
+                   styleClass="settings-field-label"/>
+
+            <Label text="Telegram-бот та автоматичні повідомлення будуть вимкнені після перезапуску програми."
+                   wrapText="true"
+                   styleClass="settings-card-description"/>
+
+            <Button fx:id="deleteButton"
+                    text="Видалити токен"
+                    onAction="#deleteToken"
+                    styleClass="danger-button"/>
+
+        </VBox>
+
+    </VBox>
+
+</VBox>
