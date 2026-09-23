@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class ClientMembershipFormController {
 
     private static final Pattern TEEN_PATTERN =
-            Pattern.compile("(13\\s*[-–—]\\s*17)|(13\\s*до\\s*17)", Pattern.CASE_INSENSITIVE);
+            Pattern.compile("(0\\s*[-–—]\\s*17)|(13\\s*до\\s*17)", Pattern.CASE_INSENSITIVE);
 
     private final MembershipService membershipService;
     private final MembershipTypeService membershipTypeService;
