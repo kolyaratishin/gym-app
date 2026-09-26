@@ -527,3 +527,41 @@
 .danger-button:hover {
     -fx-background-color: #fecaca;
 }
+
+/* =========================
+   Membership freeze / resume
+   ========================= */
+
+.membership-freeze-button {
+    -fx-background-color: #f59e0b;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.membership-freeze-button:hover {
+    -fx-background-color: #d97706;
+}
+
+.membership-freeze-button:pressed {
+    -fx-background-color: #b45309;
+}
+
+.membership-resume-button {
+    -fx-background-color: #16a34a;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16;
+    -fx-cursor: hand;
+}
+
+.membership-resume-button:hover {
+    -fx-background-color: #15803d;
+}
+
+.membership-resume-button:pressed {
+    -fx-background-color: #166534;
+}

@@ -1,28 +1,22 @@
 package com.gymapp.membership.db.domain;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class Membership {
-    @Override
-    public String toString() {
-        return "Membership{" +
-                "id=" + id +
-                ", clientId=" + clientId +
-                ", membershipTypeId=" + membershipTypeId +
-                ", startDate=" + startDate +
-                ", endDate=" + endDate +
-                ", remainingVisits=" + remainingVisits +
-                ", status=" + status +
-                '}';
-    }
 
     private Long id;
     private Long clientId;
     private Long membershipTypeId;
+
     private LocalDate startDate;
     private LocalDate endDate;
+
     private Integer remainingVisits;
+
     private MembershipStatus status;
+
+    private LocalDateTime pausedAt;
 
     public Long getId() {
         return id;
@@ -78,5 +72,13 @@ public class Membership {
 
     public void setStatus(MembershipStatus status) {
         this.status = status;
+    }
+
+    public LocalDateTime getPausedAt() {
+        return pausedAt;
+    }
+
+    public void setPausedAt(LocalDateTime pausedAt) {
+        this.pausedAt = pausedAt;
     }
 }

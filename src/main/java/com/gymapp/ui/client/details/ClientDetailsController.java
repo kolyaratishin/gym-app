@@ -7,6 +7,8 @@ import com.gymapp.client.db.Client;
 import com.gymapp.context.AppContext;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
+import com.gymapp.membership.db.domain.MembershipStatus;
+import com.gymapp.membership.service.MembershipService;
 import com.gymapp.membership.service.MembershipTypeService;
 import com.gymapp.telegram.service.TelegramMessagingService;
 import com.gymapp.ui.client.history.ClientVisitHistoryController;
@@ -22,18 +24,23 @@ import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 public class ClientDetailsController {
 
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
     private final MembershipRepository membershipRepository;
+    private final MembershipService membershipService;
     private final MembershipTypeService membershipTypeService;
     private final VisitService visitService;
     private final VisitRepository visitRepository;
+    private final TelegramMessagingService telegramMessagingService;
 
     private ClientDetailsViewBinder clientDetailsViewBinder;
     private ClientMembershipViewBinder membershipViewBinder;
-    private final TelegramMessagingService telegramMessagingService;
 
     @FXML
     private Label idValueLabel;
@@ -87,6 +94,18 @@ public class ClientDetailsController {
     private Button manageMembershipButton;
 
     @FXML
+    private Button registerVisitButton;
+
+    @FXML
+    private Button freezeMembershipButton;
+
+    @FXML
+    private Label membershipPausedAtTitleLabel;
+
+    @FXML
+    private Label membershipPausedAtValueLabel;
+
+    @FXML
     private Label visitedTodayIndicatorLabel;
 
     @FXML
@@ -102,46 +121,65 @@ public class ClientDetailsController {
     private Runnable onClientUpdated;
 
     public ClientDetailsController() {
-        this.membershipRepository = AppContext.membershipRepository();
-        this.membershipTypeService = AppContext.membershipTypeService();
-        this.visitService = AppContext.visitService();
-        this.visitRepository = AppContext.visitRepository();
-        this.telegramMessagingService = AppContext.telegramMessagingService();
+        this.membershipRepository =
+                AppContext.membershipRepository();
+
+        this.membershipService =
+                AppContext.membershipService();
+
+        this.membershipTypeService =
+                AppContext.membershipTypeService();
+
+        this.visitService =
+                AppContext.visitService();
+
+        this.visitRepository =
+                AppContext.visitRepository();
+
+        this.telegramMessagingService =
+                AppContext.telegramMessagingService();
     }
 
     @FXML
     private void initialize() {
-        this.clientDetailsViewBinder = new ClientDetailsViewBinder(
-                idValueLabel,
-                firstNameValueLabel,
-                lastNameValueLabel,
-                phoneValueLabel,
-                birthDateValueLabel,
-                notesValueLabel,
-                registrationDateValueLabel
-        );
-        this.membershipViewBinder = new ClientMembershipViewBinder(
-                membershipTypeService,
-                membershipStatusValueLabel,
-                membershipTypeValueLabel,
-                membershipPolicyValueLabel,
-                membershipStartDateValueLabel,
-                membershipEndDateValueLabel,
-                membershipRemainingVisitsValueLabel,
-                membershipPriceValueLabel,
-                membershipDateStateValueLabel,
-                membershipAlertIndicatorLabel,
-                manageMembershipButton
-        );
+        this.clientDetailsViewBinder =
+                new ClientDetailsViewBinder(
+                        idValueLabel,
+                        firstNameValueLabel,
+                        lastNameValueLabel,
+                        phoneValueLabel,
+                        birthDateValueLabel,
+                        notesValueLabel,
+                        registrationDateValueLabel
+                );
+
+        this.membershipViewBinder =
+                new ClientMembershipViewBinder(
+                        membershipTypeService,
+                        membershipStatusValueLabel,
+                        membershipTypeValueLabel,
+                        membershipPolicyValueLabel,
+                        membershipStartDateValueLabel,
+                        membershipEndDateValueLabel,
+                        membershipRemainingVisitsValueLabel,
+                        membershipPriceValueLabel,
+                        membershipDateStateValueLabel,
+                        membershipAlertIndicatorLabel,
+                        manageMembershipButton
+                );
     }
 
-    public void setOnClientUpdated(Runnable onClientUpdated) {
+    public void setOnClientUpdated(
+            Runnable onClientUpdated
+    ) {
         this.onClientUpdated = onClientUpdated;
     }
 
     public void setClient(Client client) {
         this.client = client;
+
         clientDetailsViewBinder.showClient(client);
+
         refreshClientState();
     }
 
@@ -153,6 +191,272 @@ public class ClientDetailsController {
         loadMembershipInfo(client.getId());
         updateVisitedTodayIndicator(client.getId());
         updateTelegramState();
+    }
+
+    private void loadMembershipInfo(Long clientId) {
+        Optional<Membership> membershipOptional =
+                membershipService.findCurrentByClientId(
+                        clientId
+                );
+
+        activeValueLabel.setText(
+                membershipOptional.isPresent()
+                        ? "Так"
+                        : "Ні"
+        );
+
+        membershipViewBinder.showMembership(
+                membershipOptional
+        );
+
+        updateMembershipActions(
+                membershipOptional
+        );
+    }
+
+    private void updateMembershipActions(
+            Optional<Membership> membershipOptional
+    ) {
+        if (membershipOptional.isEmpty()) {
+            hideFreezeButton();
+            registerVisitButton.setDisable(true);
+            hidePausedAt();
+            return;
+        }
+
+        Membership membership =
+                membershipOptional.get();
+
+        MembershipStatus status =
+                membership.getStatus();
+
+        if (status == MembershipStatus.FROZEN) {
+            freezeMembershipButton.setText(
+                    "▶ Відновити"
+            );
+
+            setFreezeButtonStyle(
+                    "membership-resume-button"
+            );
+
+            freezeMembershipButton.setVisible(true);
+            freezeMembershipButton.setManaged(true);
+
+            registerVisitButton.setDisable(true);
+
+            showPausedAt(membership);
+
+            return;
+        }
+
+        hidePausedAt();
+
+        if (status == MembershipStatus.ACTIVE) {
+            registerVisitButton.setDisable(false);
+
+            boolean canFreeze =
+                    membership.getEndDate() != null;
+
+            freezeMembershipButton.setText(
+                    "❄ Заморозити"
+            );
+
+            setFreezeButtonStyle(
+                    "membership-freeze-button"
+            );
+
+            freezeMembershipButton.setVisible(
+                    canFreeze
+            );
+
+            freezeMembershipButton.setManaged(
+                    canFreeze
+            );
+
+            return;
+        }
+
+        hideFreezeButton();
+        registerVisitButton.setDisable(true);
+    }
+
+    private void setFreezeButtonStyle(String styleClass) {
+        freezeMembershipButton
+                .getStyleClass()
+                .setAll(
+                        "button",
+                        styleClass
+                );
+    }
+
+    private void showPausedAt(
+            Membership membership
+    ) {
+        if (membership.getPausedAt() == null) {
+            hidePausedAt();
+            return;
+        }
+
+        membershipPausedAtValueLabel.setText(
+                membership.getPausedAt()
+                        .toLocalDate()
+                        .format(DATE_FORMATTER)
+        );
+
+        membershipPausedAtTitleLabel.setVisible(true);
+        membershipPausedAtTitleLabel.setManaged(true);
+
+        membershipPausedAtValueLabel.setVisible(true);
+        membershipPausedAtValueLabel.setManaged(true);
+    }
+
+    private void hidePausedAt() {
+        membershipPausedAtTitleLabel.setVisible(false);
+        membershipPausedAtTitleLabel.setManaged(false);
+
+        membershipPausedAtValueLabel.setVisible(false);
+        membershipPausedAtValueLabel.setManaged(false);
+
+        membershipPausedAtValueLabel.setText("");
+    }
+
+    private void hideFreezeButton() {
+        freezeMembershipButton.setVisible(false);
+        freezeMembershipButton.setManaged(false);
+    }
+
+    @FXML
+    private void onToggleMembershipFreeze() {
+        if (client == null) {
+            return;
+        }
+
+        Optional<Membership> membershipOptional =
+                membershipService.findCurrentByClientId(
+                        client.getId()
+                );
+
+        if (membershipOptional.isEmpty()) {
+            return;
+        }
+
+        Membership membership =
+                membershipOptional.get();
+
+        if (membership.getStatus()
+                == MembershipStatus.ACTIVE) {
+
+            freezeMembership(membership);
+            return;
+        }
+
+        if (membership.getStatus()
+                == MembershipStatus.FROZEN) {
+
+            resumeMembership(membership);
+        }
+    }
+
+    private void freezeMembership(
+            Membership membership
+    ) {
+        boolean confirmed =
+                DialogService.showConfirm(
+                        "Заморозити абонемент",
+                        """
+                        Заморозити абонемент цього клієнта?
+
+                        Під час заморозки реєстрація відвідувань буде недоступна.
+
+                        Термін дії абонемента буде продовжено на кількість днів заморозки.
+                        """
+                );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            membershipService.freezeMembership(
+                    membership.getId()
+            );
+
+            refreshClientState();
+            notifyClientUpdated();
+
+            DialogService.showInfo(
+                    "Абонемент заморожено",
+                    """
+                    Абонемент успішно заморожено.
+
+                    Відновити його можна у будь-який момент у деталях клієнта.
+                    """
+            );
+
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_DETAILS_MANAGE_MEMBERSHIP,
+                    UserErrorMessages.MEMBERSHIP_MANAGE_OPEN_FAILED,
+                    buildClientErrorDetails(),
+                    e
+            );
+        }
+    }
+
+    private void resumeMembership(
+            Membership membership
+    ) {
+        boolean confirmed =
+                DialogService.showConfirm(
+                        "Відновити абонемент",
+                        """
+                        Відновити абонемент цього клієнта?
+
+                        Дата завершення буде автоматично продовжена на тривалість заморозки.
+                        """
+                );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            Membership resumedMembership =
+                    membershipService.resumeMembership(
+                            membership.getId()
+                    );
+
+            refreshClientState();
+            notifyClientUpdated();
+
+            String newEndDate =
+                    resumedMembership.getEndDate() != null
+                            ? resumedMembership
+                              .getEndDate()
+                              .format(DATE_FORMATTER)
+                            : "-";
+
+            DialogService.showInfo(
+                    "Абонемент відновлено",
+                    "Абонемент успішно відновлено.\n\n"
+                            + "Нова дата завершення: "
+                            + newEndDate
+            );
+
+        } catch (Exception e) {
+            ErrorHandler.handle(
+                    ErrorLogMessages.CLIENT_DETAILS_MANAGE_MEMBERSHIP,
+                    UserErrorMessages.MEMBERSHIP_MANAGE_OPEN_FAILED,
+                    buildClientErrorDetails(),
+                    e
+            );
+        }
+    }
+
+    private void notifyClientUpdated() {
+        if (onClientUpdated != null) {
+            onClientUpdated.run();
+        }
     }
 
     private void updateTelegramState() {
@@ -168,9 +472,10 @@ public class ClientDetailsController {
         }
 
         boolean connected =
-                telegramMessagingService.isTelegramConnected(
-                        client.getId()
-                );
+                telegramMessagingService
+                        .isTelegramConnected(
+                                client.getId()
+                        );
 
         if (connected) {
             applyBadgeStyle(
@@ -180,6 +485,7 @@ public class ClientDetailsController {
             );
 
             sendTelegramButton.setDisable(false);
+
         } else {
             applyBadgeStyle(
                     telegramStatusLabel,
@@ -189,13 +495,6 @@ public class ClientDetailsController {
 
             sendTelegramButton.setDisable(true);
         }
-    }
-
-    private void loadMembershipInfo(Long clientId) {
-        Optional<Membership> membershipOptional = membershipRepository.findActiveByClientId(clientId);
-
-        activeValueLabel.setText(membershipOptional.isPresent() ? "Так" : "Ні");
-        membershipViewBinder.showMembership(membershipOptional);
     }
 
     @FXML
@@ -221,26 +520,27 @@ public class ClientDetailsController {
         }
 
         try {
-            Stage stage = ViewLoader.openWindow(
-                    "/fxml/client/ClientMembershipFormView.fxml",
-                    "Керування абонементом",
-                    0.72,
-                    0.92,
-                    (ClientMembershipFormController controller) -> {
-                        controller.setClient(client);
-                        controller.setOnMembershipSaved(() -> {
-                            refreshClientState();
+            Stage stage =
+                    ViewLoader.openWindow(
+                            "/fxml/client/ClientMembershipFormView.fxml",
+                            "Керування абонементом",
+                            0.72,
+                            0.92,
+                            (ClientMembershipFormController controller) -> {
+                                controller.setClient(client);
 
-                            if (onClientUpdated != null) {
-                                onClientUpdated.run();
+                                controller.setOnMembershipSaved(() -> {
+                                    refreshClientState();
+
+                                    notifyClientUpdated();
+                                });
                             }
-                        });
-                    }
-            );
+                    );
 
             stage.setMaximized(true);
             stage.setMinWidth(560);
             stage.setMinHeight(300);
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.CLIENT_DETAILS_MANAGE_MEMBERSHIP,
@@ -257,20 +557,57 @@ public class ClientDetailsController {
             return;
         }
 
-        boolean confirmed = DialogService.showConfirm(
-                "Підтвердження",
-                "Підтвердити тренування для " + client.getFirstName() + " " + client.getLastName() + "?"
-        );
+        /*
+         * UI protection.
+         *
+         * VisitService все одно повинен залишатися
+         * основним місцем бізнес-перевірки.
+         */
+        Optional<Membership> membership =
+                membershipService.findCurrentByClientId(
+                        client.getId()
+                );
+
+        if (membership.isEmpty()
+                || membership.get().getStatus()
+                != MembershipStatus.ACTIVE) {
+
+            DialogService.showInfo(
+                    "Відвідування недоступне",
+                    "Клієнт не має активного абонемента."
+            );
+
+            refreshClientState();
+            return;
+        }
+
+        boolean confirmed =
+                DialogService.showConfirm(
+                        "Підтвердження",
+                        "Підтвердити тренування для "
+                                + client.getFirstName()
+                                + " "
+                                + client.getLastName()
+                                + "?"
+                );
 
         if (!confirmed) {
             return;
         }
 
         try {
-            String resultMessage = visitService.registerVisit(client.getId());
-            DialogService.showInfo("Реєстрація відвідування", resultMessage);
+            String resultMessage =
+                    visitService.registerVisit(
+                            client.getId()
+                    );
+
+            DialogService.showInfo(
+                    "Реєстрація відвідування",
+                    resultMessage
+            );
 
             refreshClientState();
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.CLIENT_DETAILS_REGISTER_VISIT,
@@ -281,17 +618,39 @@ public class ClientDetailsController {
         }
     }
 
-    private void updateVisitedTodayIndicator(Long clientId) {
+    private void updateVisitedTodayIndicator(
+            Long clientId
+    ) {
         try {
-            boolean visitedToday = visitRepository.findByClientId(clientId).stream()
-                    .anyMatch(visit -> visit.getVisitTime() != null
-                            && visit.getVisitTime().toLocalDate().isEqual(LocalDate.now()));
+            boolean visitedToday =
+                    visitRepository
+                            .findByClientId(clientId)
+                            .stream()
+                            .anyMatch(
+                                    visit ->
+                                            visit.getVisitTime() != null
+                                                    && visit.getVisitTime()
+                                                    .toLocalDate()
+                                                    .isEqual(
+                                                            LocalDate.now()
+                                                    )
+                            );
 
             if (visitedToday) {
-                applyBadgeStyle(visitedTodayIndicatorLabel, "✔ Сьогодні був", "status-pill-success");
+                applyBadgeStyle(
+                        visitedTodayIndicatorLabel,
+                        "✔ Сьогодні був",
+                        "status-pill-success"
+                );
+
             } else {
-                applyBadgeStyle(visitedTodayIndicatorLabel, "✖ Сьогодні не був", "status-pill-danger");
+                applyBadgeStyle(
+                        visitedTodayIndicatorLabel,
+                        "✖ Сьогодні не був",
+                        "status-pill-danger"
+                );
             }
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.CLIENT_DETAILS_LOAD_VISIT_STATE,
@@ -317,6 +676,7 @@ public class ClientDetailsController {
                     (ClientVisitHistoryController controller) ->
                             controller.setClient(client)
             );
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.CLIENT_VISIT_HISTORY_OPEN,
@@ -329,7 +689,11 @@ public class ClientDetailsController {
 
     @FXML
     private void onClose() {
-        Stage stage = (Stage) idValueLabel.getScene().getWindow();
+        Stage stage =
+                (Stage) idValueLabel
+                        .getScene()
+                        .getWindow();
+
         stage.close();
     }
 
@@ -344,8 +708,16 @@ public class ClientDetailsController {
                 + ", lastName=" + client.getLastName();
     }
 
-    private void applyBadgeStyle(Label label, String text, String pillType) {
+    private void applyBadgeStyle(
+            Label label,
+            String text,
+            String pillType
+    ) {
         label.setText(text);
-        label.getStyleClass().setAll("status-pill", pillType);
+
+        label.getStyleClass().setAll(
+                "status-pill",
+                pillType
+        );
     }
 }

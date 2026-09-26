@@ -9,6 +9,8 @@ public enum AuditEventType {
     MEMBERSHIP_CREATED("Створено абонемент"),
     MEMBERSHIP_UPDATED("Оновлено абонемент"),
     MEMBERSHIP_DEACTIVATED("Деактивовано абонемент"),
+    MEMBERSHIP_FROZEN("Заморожено абонемент"),
+    MEMBERSHIP_RESUMED("Відновлено абонемент"),
 
     VISIT_REGISTERED("Зареєстровано відвідування"),
 

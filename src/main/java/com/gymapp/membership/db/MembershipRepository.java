@@ -35,4 +35,5 @@ public interface MembershipRepository {
 
     List<Membership> findExpiringBetween(LocalDate from, LocalDate to);
     List<Membership> findExpired();
+    Optional<Membership> findCurrentByClientId(Long clientId);
 }
