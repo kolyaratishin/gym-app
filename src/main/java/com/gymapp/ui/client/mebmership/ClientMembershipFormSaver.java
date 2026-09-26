@@ -9,7 +9,9 @@ public class ClientMembershipFormSaver {
 
     private final MembershipService membershipService;
 
-    public ClientMembershipFormSaver(MembershipService membershipService) {
+    public ClientMembershipFormSaver(
+            MembershipService membershipService
+    ) {
         this.membershipService = membershipService;
     }
 
@@ -21,14 +23,30 @@ public class ClientMembershipFormSaver {
             LocalDate endDate,
             Integer remainingVisits
     ) {
-        boolean hasActiveMembership = membershipService.findActiveByClientId(clientId).isPresent();
+        boolean hasCurrentMembership =
+                membershipService
+                        .findCurrentByClientId(clientId)
+                        .isPresent();
 
         if (manualMode) {
-            saveManual(clientId, selectedType, startDate, endDate, remainingVisits, hasActiveMembership);
+            saveManual(
+                    clientId,
+                    selectedType,
+                    startDate,
+                    endDate,
+                    remainingVisits,
+                    hasCurrentMembership
+            );
+
             return;
         }
 
-        saveRegular(clientId, selectedType, startDate, hasActiveMembership);
+        saveRegular(
+                clientId,
+                selectedType,
+                startDate,
+                hasCurrentMembership
+        );
     }
 
     private void saveManual(
@@ -37,37 +55,53 @@ public class ClientMembershipFormSaver {
             LocalDate startDate,
             LocalDate endDate,
             Integer remainingVisits,
-            boolean hasActiveMembership
+            boolean hasCurrentMembership
     ) {
-        if (hasActiveMembership) {
-            membershipService.replaceWithManualMembership(
-                    clientId,
-                    selectedType,
-                    startDate,
-                    endDate,
-                    remainingVisits
-            );
-        } else {
-            membershipService.createManualMembership(
-                    clientId,
-                    selectedType,
-                    startDate,
-                    endDate,
-                    remainingVisits
-            );
+        if (hasCurrentMembership) {
+            membershipService
+                    .replaceWithManualMembership(
+                            clientId,
+                            selectedType,
+                            startDate,
+                            endDate,
+                            remainingVisits
+                    );
+
+            return;
         }
+
+        membershipService
+                .createManualMembership(
+                        clientId,
+                        selectedType,
+                        startDate,
+                        endDate,
+                        remainingVisits
+                );
     }
 
     private void saveRegular(
             Long clientId,
             MembershipType selectedType,
             LocalDate startDate,
-            boolean hasActiveMembership
+            boolean hasCurrentMembership
     ) {
-        if (hasActiveMembership) {
-            membershipService.replaceMembership(clientId, selectedType, startDate);
-        } else {
-            membershipService.createMembership(clientId, selectedType, startDate);
+        if (hasCurrentMembership) {
+            membershipService
+                    .replaceMembership(
+                            clientId,
+                            selectedType,
+                            startDate
+                    );
+
+            return;
         }
+
+        membershipService
+                .createMembership(
+                        clientId,
+                        selectedType,
+                        startDate
+                );
     }
 }

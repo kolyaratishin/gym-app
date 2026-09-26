@@ -159,6 +159,7 @@ public class ClientMembershipViewBinder {
 
     private String formatMembershipStatus(MembershipStatus status) {
         return switch (status) {
+            case SCHEDULED -> "Запланований";
             case ACTIVE -> "Активний";
             case EXPIRED -> "Прострочений";
             case FROZEN -> "Заморожений";

@@ -1,6 +1,8 @@
 @echo off
 chcp 65001 > nul
-cd /d "C:\Users\kolya\IdeaProjects\gym-app"
+
+REM Переходимо в папку, де знаходиться цей update_.bat
+cd /d "%~dp0"
 
 echo ==============================
 echo Оновлення Gym App...
@@ -18,7 +20,7 @@ IF %ERRORLEVEL% EQU 0 (
     echo ❌ Помилка при оновленні!
     echo.
     echo Покажіть розробнику файл:
-    echo C:\Users\kolya\IdeaProjects\gym-app\update_log.txt
+    echo %~dp0update_log.txt
 )
 
 echo.

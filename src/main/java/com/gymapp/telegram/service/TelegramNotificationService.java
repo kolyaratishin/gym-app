@@ -16,7 +16,9 @@ public class TelegramNotificationService {
 
     private static final int EXPIRING_DAYS_BEFORE = 3;
     private static final int LOW_VISITS_THRESHOLD = 2;
+
     private static final String LOW_VISITS_REFERENCE = "LOW";
+    private static final String VISITS_EXHAUSTED_REFERENCE = "ZERO";
 
     private static final DateTimeFormatter DATE_FORMATTER =
             DateTimeFormatter.ofPattern("dd.MM.yyyy");
@@ -40,6 +42,7 @@ public class TelegramNotificationService {
 
     public NotificationResult sendExpiringMembershipNotifications() {
         LocalDate today = LocalDate.now();
+
         LocalDate maxEndDate =
                 today.plusDays(EXPIRING_DAYS_BEFORE);
 
@@ -55,7 +58,9 @@ public class TelegramNotificationService {
 
         for (Membership membership : memberships) {
             LocalDate endDate = membership.getEndDate();
-            String referenceValue = endDate.toString();
+
+            String referenceValue =
+                    endDate.toString();
 
             if (alreadySent(
                     membership,
@@ -76,10 +81,15 @@ public class TelegramNotificationService {
                 continue;
             }
 
-            boolean success = telegramBot.sendMessage(
-                    telegramAccount.get().getTelegramChatId(),
-                    buildExpiringMessage(today, endDate)
-            );
+            boolean success =
+                    telegramBot.sendMessage(
+                            telegramAccount.get()
+                                    .getTelegramChatId(),
+                            buildExpiringMessage(
+                                    today,
+                                    endDate
+                            )
+                    );
 
             if (!success) {
                 failed++;
@@ -104,15 +114,19 @@ public class TelegramNotificationService {
     }
 
     public NotificationResult sendExpiredMembershipNotifications() {
-        List<Membership> memberships = membershipService.findExpired();
+        List<Membership> memberships =
+                membershipService.findExpired();
 
         int sent = 0;
         int skipped = 0;
         int failed = 0;
 
         for (Membership membership : memberships) {
-            LocalDate endDate = membership.getEndDate();
-            String referenceValue = endDate.toString();
+            LocalDate endDate =
+                    membership.getEndDate();
+
+            String referenceValue =
+                    endDate.toString();
 
             if (alreadySent(
                     membership,
@@ -145,10 +159,12 @@ public class TelegramNotificationService {
                 continue;
             }
 
-            boolean success = telegramBot.sendMessage(
-                    telegramAccount.get().getTelegramChatId(),
-                    buildExpiredMessage()
-            );
+            boolean success =
+                    telegramBot.sendMessage(
+                            telegramAccount.get()
+                                    .getTelegramChatId(),
+                            buildExpiredMessage()
+                    );
 
             if (!success) {
                 failed++;
@@ -201,10 +217,14 @@ public class TelegramNotificationService {
             return false;
         }
 
-        boolean success = telegramBot.sendMessage(
-                telegramAccount.get().getTelegramChatId(),
-                buildLowVisitsMessage(remainingVisits)
-        );
+        boolean success =
+                telegramBot.sendMessage(
+                        telegramAccount.get()
+                                .getTelegramChatId(),
+                        buildLowVisitsMessage(
+                                remainingVisits
+                        )
+                );
 
         if (!success) {
             return false;
@@ -214,6 +234,54 @@ public class TelegramNotificationService {
                 membership,
                 TelegramNotificationType.LOW_VISITS,
                 LOW_VISITS_REFERENCE
+        );
+
+        return true;
+    }
+
+    public boolean sendVisitsExhaustedNotification(
+            Membership membership
+    ) {
+        Integer remainingVisits =
+                membership.getRemainingVisits();
+
+        if (remainingVisits == null
+                || remainingVisits > 0) {
+            return false;
+        }
+
+        if (alreadySent(
+                membership,
+                TelegramNotificationType.MEMBERSHIP_VISITS_EXHAUSTED,
+                VISITS_EXHAUSTED_REFERENCE
+        )) {
+            return false;
+        }
+
+        Optional<TelegramAccount> telegramAccount =
+                telegramAccountRepository.findByClientId(
+                        membership.getClientId()
+                );
+
+        if (telegramAccount.isEmpty()) {
+            return false;
+        }
+
+        boolean success =
+                telegramBot.sendMessage(
+                        telegramAccount.get()
+                                .getTelegramChatId(),
+                        buildVisitsExhaustedMessage()
+                );
+
+        if (!success) {
+            return false;
+        }
+
+        saveNotification(
+                membership,
+                TelegramNotificationType.MEMBERSHIP_VISITS_EXHAUSTED,
+                VISITS_EXHAUSTED_REFERENCE
         );
 
         return true;
@@ -248,10 +316,18 @@ public class TelegramNotificationService {
         );
 
         notification.setType(type);
-        notification.setReferenceValue(referenceValue);
-        notification.setSentAt(LocalDateTime.now());
 
-        notificationRepository.save(notification);
+        notification.setReferenceValue(
+                referenceValue
+        );
+
+        notification.setSentAt(
+                LocalDateTime.now()
+        );
+
+        notificationRepository.save(
+                notification
+        );
     }
 
     private String buildExpiringMessage(
@@ -259,15 +335,22 @@ public class TelegramNotificationService {
             LocalDate endDate
     ) {
         long daysLeft =
-                ChronoUnit.DAYS.between(today, endDate);
+                ChronoUnit.DAYS.between(
+                        today,
+                        endDate
+                );
 
-        String expirationText = switch ((int) daysLeft) {
-            case 0 -> "сьогодні";
-            case 1 -> "завтра";
-            case 2 -> "через 2 дні";
-            case 3 -> "через 3 дні";
-            default -> endDate.format(DATE_FORMATTER);
-        };
+        String expirationText =
+                switch ((int) daysLeft) {
+                    case 0 -> "сьогодні";
+                    case 1 -> "завтра";
+                    case 2 -> "через 2 дні";
+                    case 3 -> "через 3 дні";
+                    default ->
+                            endDate.format(
+                                    DATE_FORMATTER
+                            );
+                };
 
         return """
                 Нагадування 🏋️
@@ -277,7 +360,9 @@ public class TelegramNotificationService {
                 Будемо раді бачити вас у залі!
                 """.formatted(
                 expirationText,
-                endDate.format(DATE_FORMATTER)
+                endDate.format(
+                        DATE_FORMATTER
+                )
         );
     }
 
@@ -300,7 +385,19 @@ public class TelegramNotificationService {
                 У вашому абонементі залишилося %d відвідування.
 
                 Не забудьте завчасно продовжити абонемент 💪
-                """.formatted(remainingVisits);
+                """.formatted(
+                remainingVisits
+        );
+    }
+
+    private String buildVisitsExhaustedMessage() {
+        return """
+                Ваш абонемент завершився 🏋️
+
+                Ви використали всі доступні відвідування.
+
+                Продовжіть абонемент, щоб повернутися до тренувань 💪
+                """;
     }
 
     public record NotificationResult(
@@ -308,5 +405,6 @@ public class TelegramNotificationService {
             int sent,
             int skipped,
             int failed
-    ) {}
+    ) {
+    }
 }

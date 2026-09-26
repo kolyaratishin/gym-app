@@ -5,22 +5,87 @@ import com.gymapp.db.ConnectionFactory;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public class SqliteMembershipRepository extends BaseRepository implements MembershipRepository {
+public class SqliteMembershipRepository
+        extends BaseRepository
+        implements MembershipRepository {
 
-    public SqliteMembershipRepository(ConnectionFactory connectionFactory) {
+    public SqliteMembershipRepository(
+            ConnectionFactory connectionFactory
+    ) {
         super(connectionFactory);
     }
 
     @Override
     public Membership save(Membership m) {
+        String sql = """
+                INSERT INTO memberships (
+                    client_id,
+                    membership_type_id,
+                    start_date,
+                    end_date,
+                    remaining_visits,
+                    status,
+                    paused_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
+
+        long id = insertAndReturnId(
+                sql,
+                ps -> {
+                    ps.setLong(1, m.getClientId());
+                    ps.setLong(
+                            2,
+                            m.getMembershipTypeId()
+                    );
+                    ps.setString(
+                            3,
+                            m.getStartDate().toString()
+                    );
+                    ps.setString(
+                            4,
+                            toString(m.getEndDate())
+                    );
+
+                    if (m.getRemainingVisits() != null) {
+                        ps.setInt(
+                                5,
+                                m.getRemainingVisits()
+                        );
+                    } else {
+                        ps.setNull(
+                                5,
+                                Types.INTEGER
+                        );
+                    }
+
+                    ps.setString(
+                            6,
+                            m.getStatus().name()
+                    );
+
+                    ps.setString(
+                            7,
+                            toString(m.getPausedAt())
+                    );
+                }
+        );
+
+        m.setId(id);
+
+        return m;
+    }
+
+    @Override
+    public Membership save(
+            Connection connection,
+            Membership m
+    ) {
         String sql = """
             INSERT INTO memberships (
                 client_id,
@@ -33,33 +98,87 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """;
 
-        long id = insertAndReturnId(sql, ps -> {
-            ps.setLong(1, m.getClientId());
-            ps.setLong(2, m.getMembershipTypeId());
-            ps.setString(3, m.getStartDate().toString());
-            ps.setString(4, toString(m.getEndDate()));
+        try (PreparedStatement ps =
+                     connection.prepareStatement(
+                             sql,
+                             Statement.RETURN_GENERATED_KEYS
+                     )) {
+
+            ps.setLong(
+                    1,
+                    m.getClientId()
+            );
+
+            ps.setLong(
+                    2,
+                    m.getMembershipTypeId()
+            );
+
+            ps.setString(
+                    3,
+                    m.getStartDate().toString()
+            );
+
+            ps.setString(
+                    4,
+                    toString(m.getEndDate())
+            );
 
             if (m.getRemainingVisits() != null) {
-                ps.setInt(5, m.getRemainingVisits());
+                ps.setInt(
+                        5,
+                        m.getRemainingVisits()
+                );
             } else {
-                ps.setNull(5, Types.INTEGER);
+                ps.setNull(
+                        5,
+                        Types.INTEGER
+                );
             }
 
-            ps.setString(6, m.getStatus().name());
-            ps.setString(7, toString(m.getPausedAt()));
-        });
+            ps.setString(
+                    6,
+                    m.getStatus().name()
+            );
 
-        m.setId(id);
-        return m;
+            ps.setString(
+                    7,
+                    toString(m.getPausedAt())
+            );
+
+            ps.executeUpdate();
+
+            try (ResultSet keys =
+                         ps.getGeneratedKeys()) {
+
+                if (!keys.next()) {
+                    throw new RuntimeException(
+                            "No ID returned for membership"
+                    );
+                }
+
+                m.setId(
+                        keys.getLong(1)
+                );
+            }
+
+            return m;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Failed to insert membership",
+                    e
+            );
+        }
     }
 
     @Override
     public Optional<Membership> findById(Long id) {
         String sql = """
-            SELECT *
-            FROM memberships
-            WHERE id = ?
-            """;
+                SELECT *
+                FROM memberships
+                WHERE id = ?
+                """;
 
         return query(
                 sql,
@@ -71,81 +190,153 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
     @Override
     public List<Membership> findAll() {
         return query(
-                "SELECT * FROM memberships ORDER BY id",
+                """
+                SELECT *
+                FROM memberships
+                ORDER BY id
+                """,
                 null,
                 this::mapMembership
         );
     }
 
     @Override
-    public List<Membership> findByClientId(Long clientId) {
+    public List<Membership> findByClientId(
+            Long clientId
+    ) {
         String sql = """
-            SELECT *
-            FROM memberships
-            WHERE client_id = ?
-            ORDER BY id DESC
-            """;
+                SELECT *
+                FROM memberships
+                WHERE client_id = ?
+                ORDER BY id DESC
+                """;
 
         return query(
                 sql,
-                ps -> ps.setLong(1, clientId),
+                ps -> ps.setLong(
+                        1,
+                        clientId
+                ),
                 this::mapMembership
         );
     }
 
     @Override
-    public List<Membership> findByStatus(MembershipStatus status) {
+    public List<Membership> findByStatus(
+            MembershipStatus status
+    ) {
         String sql = """
-            SELECT *
-            FROM memberships
-            WHERE status = ?
-            ORDER BY id DESC
-            """;
+                SELECT *
+                FROM memberships
+                WHERE status = ?
+                ORDER BY id DESC
+                """;
 
         return query(
                 sql,
-                ps -> ps.setString(1, status.name()),
+                ps -> ps.setString(
+                        1,
+                        status.name()
+                ),
                 this::mapMembership
         );
     }
 
     @Override
-    public List<Membership> findExpiringUntil(LocalDate date) {
+    public List<Membership> findExpiringUntil(
+            LocalDate date
+    ) {
         String sql = """
-            SELECT *
-            FROM memberships
-            WHERE end_date IS NOT NULL
-              AND end_date <= ?
-              AND status = ?
-            ORDER BY end_date
-            """;
+                SELECT *
+                FROM memberships
+                WHERE end_date IS NOT NULL
+                  AND end_date <= ?
+                  AND status = ?
+                ORDER BY end_date
+                """;
 
         return query(
                 sql,
                 ps -> {
-                    ps.setString(1, date.toString());
-                    ps.setString(2, MembershipStatus.ACTIVE.name());
+                    ps.setString(
+                            1,
+                            date.toString()
+                    );
+
+                    ps.setString(
+                            2,
+                            MembershipStatus.ACTIVE.name()
+                    );
                 },
                 this::mapMembership
         );
     }
 
     @Override
-    public Optional<Membership> findActiveByClientId(Long clientId) {
+    public Optional<Membership> findActiveByClientId(
+            Long clientId
+    ) {
         String sql = """
-            SELECT *
-            FROM memberships
-            WHERE client_id = ?
-              AND status = ?
-            ORDER BY id DESC
-            LIMIT 1
-            """;
+                SELECT *
+                FROM memberships
+                WHERE client_id = ?
+                  AND status = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """;
 
         return query(
                 sql,
                 ps -> {
-                    ps.setLong(1, clientId);
-                    ps.setString(2, MembershipStatus.ACTIVE.name());
+                    ps.setLong(
+                            1,
+                            clientId
+                    );
+
+                    ps.setString(
+                            2,
+                            MembershipStatus.ACTIVE.name()
+                    );
+                },
+                this::mapMembership
+        ).stream().findFirst();
+    }
+
+    @Override
+    public Optional<Membership> findCurrentByClientId(
+            Long clientId
+    ) {
+        String sql = """
+                SELECT *
+                FROM memberships
+                WHERE client_id = ?
+                  AND status IN (?, ?, ?)
+                ORDER BY id DESC
+                LIMIT 1
+                """;
+
+        return query(
+                sql,
+                ps -> {
+                    ps.setLong(
+                            1,
+                            clientId
+                    );
+
+                    ps.setString(
+                            2,
+                            MembershipStatus.ACTIVE.name()
+                    );
+
+                    ps.setString(
+                            3,
+                            MembershipStatus.FROZEN.name()
+                    );
+
+                    ps.setString(
+                            4,
+                            MembershipStatus.SCHEDULED.name()
+                    );
                 },
                 this::mapMembership
         ).stream().findFirst();
@@ -153,6 +344,83 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
 
     @Override
     public void update(Membership m) {
+        String sql = """
+                UPDATE memberships
+                SET client_id = ?,
+                    membership_type_id = ?,
+                    start_date = ?,
+                    end_date = ?,
+                    remaining_visits = ?,
+                    status = ?,
+                    paused_at = ?
+                WHERE id = ?
+                """;
+
+        int updated = update(
+                sql,
+                ps -> {
+                    ps.setLong(
+                            1,
+                            m.getClientId()
+                    );
+
+                    ps.setLong(
+                            2,
+                            m.getMembershipTypeId()
+                    );
+
+                    ps.setString(
+                            3,
+                            m.getStartDate().toString()
+                    );
+
+                    ps.setString(
+                            4,
+                            toString(m.getEndDate())
+                    );
+
+                    if (m.getRemainingVisits() != null) {
+                        ps.setInt(
+                                5,
+                                m.getRemainingVisits()
+                        );
+                    } else {
+                        ps.setNull(
+                                5,
+                                Types.INTEGER
+                        );
+                    }
+
+                    ps.setString(
+                            6,
+                            m.getStatus().name()
+                    );
+
+                    ps.setString(
+                            7,
+                            toString(m.getPausedAt())
+                    );
+
+                    ps.setLong(
+                            8,
+                            m.getId()
+                    );
+                }
+        );
+
+        if (updated == 0) {
+            throw new RuntimeException(
+                    "Membership not found: "
+                            + m.getId()
+            );
+        }
+    }
+
+    @Override
+    public void update(
+            Connection connection,
+            Membership m
+    ) {
         String sql = """
             UPDATE memberships
             SET client_id = ?,
@@ -165,26 +433,64 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
             WHERE id = ?
             """;
 
-        int updated = update(sql, ps -> {
+        try (PreparedStatement ps =
+                     connection.prepareStatement(sql)) {
+
             ps.setLong(1, m.getClientId());
-            ps.setLong(2, m.getMembershipTypeId());
-            ps.setString(3, m.getStartDate().toString());
-            ps.setString(4, toString(m.getEndDate()));
+            ps.setLong(
+                    2,
+                    m.getMembershipTypeId()
+            );
+            ps.setString(
+                    3,
+                    m.getStartDate().toString()
+            );
+            ps.setString(
+                    4,
+                    toString(m.getEndDate())
+            );
 
             if (m.getRemainingVisits() != null) {
-                ps.setInt(5, m.getRemainingVisits());
+                ps.setInt(
+                        5,
+                        m.getRemainingVisits()
+                );
             } else {
-                ps.setNull(5, Types.INTEGER);
+                ps.setNull(
+                        5,
+                        Types.INTEGER
+                );
             }
 
-            ps.setString(6, m.getStatus().name());
-            ps.setString(7, toString(m.getPausedAt()));
-            ps.setLong(8, m.getId());
-        });
+            ps.setString(
+                    6,
+                    m.getStatus().name()
+            );
 
-        if (updated == 0) {
+            ps.setString(
+                    7,
+                    toString(m.getPausedAt())
+            );
+
+            ps.setLong(
+                    8,
+                    m.getId()
+            );
+
+            int updated =
+                    ps.executeUpdate();
+
+            if (updated == 0) {
+                throw new RuntimeException(
+                        "Membership not found: "
+                                + m.getId()
+                );
+            }
+
+        } catch (SQLException e) {
             throw new RuntimeException(
-                    "Membership not found: " + m.getId()
+                    "Failed to update membership",
+                    e
             );
         }
     }
@@ -192,13 +498,21 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
     @Override
     public void expireById(Long id) {
         int updated = update(
-                "UPDATE memberships SET status = ? WHERE id = ?",
+                """
+                UPDATE memberships
+                SET status = ?
+                WHERE id = ?
+                """,
                 ps -> {
                     ps.setString(
                             1,
                             MembershipStatus.EXPIRED.name()
                     );
-                    ps.setLong(2, id);
+
+                    ps.setLong(
+                            2,
+                            id
+                    );
                 }
         );
 
@@ -210,14 +524,16 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
     }
 
     @Override
-    public void deactivateActiveByClientId(Long clientId) {
+    public void deactivateActiveByClientId(
+            Long clientId
+    ) {
         update(
                 """
                 UPDATE memberships
                 SET status = ?,
                     paused_at = NULL
                 WHERE client_id = ?
-                  AND status IN (?, ?)
+                  AND status IN (?, ?, ?)
                 """,
                 ps -> {
                     ps.setString(
@@ -239,12 +555,70 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
                             4,
                             MembershipStatus.FROZEN.name()
                     );
+
+                    ps.setString(
+                            5,
+                            MembershipStatus.SCHEDULED.name()
+                    );
                 }
         );
     }
 
     @Override
-    public void expireOutdatedMemberships(LocalDate today) {
+    public void deactivateActiveByClientId(
+            Connection connection,
+            Long clientId
+    ) {
+        String sql = """
+            UPDATE memberships
+            SET status = ?,
+                paused_at = NULL
+            WHERE client_id = ?
+              AND status IN (?, ?, ?)
+            """;
+
+        try (PreparedStatement ps =
+                     connection.prepareStatement(sql)) {
+
+            ps.setString(
+                    1,
+                    MembershipStatus.CANCELLED.name()
+            );
+
+            ps.setLong(
+                    2,
+                    clientId
+            );
+
+            ps.setString(
+                    3,
+                    MembershipStatus.ACTIVE.name()
+            );
+
+            ps.setString(
+                    4,
+                    MembershipStatus.FROZEN.name()
+            );
+
+            ps.setString(
+                    5,
+                    MembershipStatus.SCHEDULED.name()
+            );
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Failed to deactivate current membership",
+                    e
+            );
+        }
+    }
+
+    @Override
+    public void expireOutdatedMemberships(
+            LocalDate today
+    ) {
         update(
                 """
                 UPDATE memberships
@@ -258,10 +632,42 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
                             1,
                             MembershipStatus.EXPIRED.name()
                     );
+
                     ps.setString(
                             2,
                             MembershipStatus.ACTIVE.name()
                     );
+
+                    ps.setString(
+                            3,
+                            today.toString()
+                    );
+                }
+        );
+    }
+
+    @Override
+    public void activateScheduledMemberships(
+            LocalDate today
+    ) {
+        update(
+                """
+                UPDATE memberships
+                SET status = ?
+                WHERE status = ?
+                  AND start_date <= ?
+                """,
+                ps -> {
+                    ps.setString(
+                            1,
+                            MembershipStatus.ACTIVE.name()
+                    );
+
+                    ps.setString(
+                            2,
+                            MembershipStatus.SCHEDULED.name()
+                    );
+
                     ps.setString(
                             3,
                             today.toString()
@@ -291,20 +697,28 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
             LocalDate to
     ) {
         String sql = """
-            SELECT *
-            FROM memberships
-            WHERE end_date IS NOT NULL
-              AND end_date >= ?
-              AND end_date <= ?
-              AND status = ?
-            ORDER BY end_date, id
-            """;
+                SELECT *
+                FROM memberships
+                WHERE end_date IS NOT NULL
+                  AND end_date >= ?
+                  AND end_date <= ?
+                  AND status = ?
+                ORDER BY end_date, id
+                """;
 
         return query(
                 sql,
                 ps -> {
-                    ps.setString(1, from.toString());
-                    ps.setString(2, to.toString());
+                    ps.setString(
+                            1,
+                            from.toString()
+                    );
+
+                    ps.setString(
+                            2,
+                            to.toString()
+                    );
+
                     ps.setString(
                             3,
                             MembershipStatus.ACTIVE.name()
@@ -317,21 +731,21 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
     @Override
     public List<Membership> findExpired() {
         String sql = """
-            SELECT m.*
-            FROM memberships m
-            WHERE m.status = ?
-              AND m.end_date IS NOT NULL
-              AND m.id = (
-                  SELECT m2.id
-                  FROM memberships m2
-                  WHERE m2.client_id = m.client_id
-                    AND m2.status = ?
-                    AND m2.end_date IS NOT NULL
-                  ORDER BY m2.end_date DESC, m2.id DESC
-                  LIMIT 1
-              )
-            ORDER BY m.end_date DESC, m.id DESC
-            """;
+                SELECT m.*
+                FROM memberships m
+                WHERE m.status = ?
+                  AND m.end_date IS NOT NULL
+                  AND m.id = (
+                      SELECT m2.id
+                      FROM memberships m2
+                      WHERE m2.client_id = m.client_id
+                        AND m2.status = ?
+                        AND m2.end_date IS NOT NULL
+                      ORDER BY m2.end_date DESC, m2.id DESC
+                      LIMIT 1
+                  )
+                ORDER BY m.end_date DESC, m.id DESC
+                """;
 
         return query(
                 sql,
@@ -350,39 +764,20 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
         );
     }
 
-    @Override
-    public Optional<Membership> findCurrentByClientId(Long clientId) {
-        String sql = """
-        SELECT *
-        FROM memberships
-        WHERE client_id = ?
-          AND status IN (?, ?)
-        ORDER BY id DESC
-        LIMIT 1
-        """;
+    private Membership mapMembership(
+            ResultSet rs
+    ) throws SQLException {
+        Membership m =
+                new Membership();
 
-        return query(
-                sql,
-                ps -> {
-                    ps.setLong(1, clientId);
-                    ps.setString(
-                            2,
-                            MembershipStatus.ACTIVE.name()
-                    );
-                    ps.setString(
-                            3,
-                            MembershipStatus.FROZEN.name()
-                    );
-                },
-                this::mapMembership
-        ).stream().findFirst();
-    }
+        m.setId(
+                rs.getLong("id")
+        );
 
-    private Membership mapMembership(ResultSet rs) throws SQLException {
-        Membership m = new Membership();
+        m.setClientId(
+                rs.getLong("client_id")
+        );
 
-        m.setId(rs.getLong("id"));
-        m.setClientId(rs.getLong("client_id"));
         m.setMembershipTypeId(
                 rs.getLong("membership_type_id")
         );
@@ -429,7 +824,9 @@ public class SqliteMembershipRepository extends BaseRepository implements Member
         return m;
     }
 
-    private String toString(LocalDateTime dateTime) {
+    private String toString(
+            LocalDateTime dateTime
+    ) {
         return dateTime != null
                 ? dateTime.toString()
                 : null;

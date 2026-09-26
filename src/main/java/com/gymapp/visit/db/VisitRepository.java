@@ -2,6 +2,7 @@ package com.gymapp.visit.db;
 
 import com.gymapp.visit.dto.ClientVisitHistoryRow;
 
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +10,11 @@ import java.util.Optional;
 public interface VisitRepository {
 
     Visit save(Visit visit);
+
+    Visit save(
+            Connection connection,
+            Visit visit
+    );
 
     Optional<Visit> findById(Long clientId);
 
@@ -22,7 +28,9 @@ public interface VisitRepository {
 
     long countByDate(LocalDate date);
 
-    public boolean hasVisitToday(Long clientId);
+    boolean hasVisitToday(Long clientId);
 
-    List<ClientVisitHistoryRow> findHistoryByClientId(Long clientId);
+    List<ClientVisitHistoryRow> findHistoryByClientId(
+            Long clientId
+    );
 }

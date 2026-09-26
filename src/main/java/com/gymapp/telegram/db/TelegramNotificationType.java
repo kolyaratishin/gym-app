@@ -4,5 +4,6 @@ public enum TelegramNotificationType {
 
     MEMBERSHIP_EXPIRING,
     MEMBERSHIP_EXPIRED,
-    LOW_VISITS
+    LOW_VISITS,
+    MEMBERSHIP_VISITS_EXHAUSTED
 }

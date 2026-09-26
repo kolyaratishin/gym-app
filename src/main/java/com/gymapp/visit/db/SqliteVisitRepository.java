@@ -4,8 +4,7 @@ import com.gymapp.db.BaseRepository;
 import com.gymapp.db.ConnectionFactory;
 import com.gymapp.visit.dto.ClientVisitHistoryRow;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -35,6 +34,66 @@ public class SqliteVisitRepository extends BaseRepository implements VisitReposi
 
         visit.setId(id);
         return visit;
+    }
+
+    @Override
+    public Visit save(
+            Connection connection,
+            Visit visit
+    ) {
+        String sql = """
+            INSERT INTO visits (
+                client_id,
+                membership_id,
+                visit_time
+            ) VALUES (?, ?, ?)
+            """;
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(
+                             sql,
+                             Statement.RETURN_GENERATED_KEYS
+                     )) {
+
+            statement.setLong(
+                    1,
+                    visit.getClientId()
+            );
+
+            statement.setLong(
+                    2,
+                    visit.getMembershipId()
+            );
+
+            statement.setString(
+                    3,
+                    visit.getVisitTime().toString()
+            );
+
+            statement.executeUpdate();
+
+            try (ResultSet keys =
+                         statement.getGeneratedKeys()) {
+
+                if (!keys.next()) {
+                    throw new RuntimeException(
+                            "No ID returned for visit"
+                    );
+                }
+
+                visit.setId(
+                        keys.getLong(1)
+                );
+            }
+
+            return visit;
+
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                    "Failed to insert visit",
+                    e
+            );
+        }
     }
 
     @Override

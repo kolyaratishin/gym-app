@@ -13,6 +13,9 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+import java.nio.file.Path;
+import java.util.Optional;
+
 public class GymApplication extends Application {
 
     private final BackupService backupService =
@@ -31,17 +34,39 @@ public class GymApplication extends Application {
         try {
             GlobalExceptionHandler.install();
 
+            /*
+             * Backup існуючої БД ДО Flyway.
+             *
+             * Якщо нова migration завершиться помилкою,
+             * у нас залишиться копія БД у стані
+             * до запуску migration.
+             */
+            createPreMigrationBackup();
+
             new FlywayMigrator(
                     SqliteConnectionFactory.getUrl()
             ).migrate();
 
+            /*
+             * Після успішної migration створюємо
+             * звичайний консистентний startup backup.
+             */
             createStartupBackupSilently();
 
             /*
-             * Telegram є додатковою інтеграцією.
+             * Синхронізація статусів абонементів
+             * є частиною основної бізнес-логіки
+             * і не залежить від Telegram.
              *
-             * Якщо token відсутній або Telegram не вдалося
-             * запустити, Gym App продовжує працювати.
+             * SCHEDULED -> ACTIVE
+             * ACTIVE -> EXPIRED
+             */
+            synchronizeMembershipStatusesSilently();
+
+            /*
+             * Telegram є додатковою інтеграцією.
+             * Якщо він не налаштований або недоступний,
+             * Gym App продовжує працювати.
              */
             boolean telegramStarted =
                     startTelegramSilently();
@@ -75,8 +100,8 @@ public class GymApplication extends Application {
             stage.show();
 
             /*
-             * Автоматичні Telegram-повідомлення запускаємо
-             * тільки якщо бот реально успішно стартував.
+             * Telegram notifications запускаємо
+             * тільки якщо бот реально працює.
              */
             if (telegramStarted) {
                 sendStartupTelegramNotifications();
@@ -92,13 +117,37 @@ public class GymApplication extends Application {
         }
     }
 
+    private void createPreMigrationBackup() {
+        Optional<Path> backup =
+                backupService.createPreMigrationBackup();
+
+        if (backup.isPresent()) {
+            System.out.println(
+                    "Pre-migration backup created: "
+                            + backup.get()
+            );
+        } else {
+            System.out.println(
+                    "Pre-migration backup skipped: "
+                            + "database does not exist yet"
+            );
+        }
+    }
+
+    private void synchronizeMembershipStatusesSilently() {
+        try {
+            AppContext.membershipService()
+                    .synchronizeMembershipStatuses();
+
+        } catch (Exception e) {
+            ErrorHandler.logOnly(
+                    ErrorLogMessages.APPLICATION_START,
+                    e
+            );
+        }
+    }
+
     private boolean startTelegramSilently() {
-        /*
-         * telegramBot == null означає:
-         * token не налаштований.
-         *
-         * Це нормальний сценарій.
-         */
         if (telegramBot == null) {
             System.out.println(
                     "Telegram bot is not configured"
@@ -121,10 +170,6 @@ public class GymApplication extends Application {
             return started;
 
         } catch (Exception e) {
-            /*
-             * Будь-яка проблема Telegram
-             * не повинна ламати Gym App.
-             */
             ErrorHandler.logOnly(
                     ErrorLogMessages.APPLICATION_START,
                     e
@@ -144,13 +189,12 @@ public class GymApplication extends Application {
                 new Thread(
                         () -> {
                             try {
-                                AppContext.membershipService()
-                                        .expireOutdatedMemberships();
-
-                                AppContext.telegramNotificationService()
+                                AppContext
+                                        .telegramNotificationService()
                                         .sendExpiringMembershipNotifications();
 
-                                AppContext.telegramNotificationService()
+                                AppContext
+                                        .telegramNotificationService()
                                         .sendExpiredMembershipNotifications();
 
                             } catch (Exception e) {
@@ -201,14 +245,12 @@ public class GymApplication extends Application {
 
     @Override
     public void stop() {
-        /*
-         * Якщо Telegram взагалі не налаштований,
-         * telegramBot буде null.
-         */
         if (telegramBot != null) {
             telegramBot.stop();
         }
 
-        createShutdownBackupSilently();
+        if (!backupService.wasRestored()) {
+            createShutdownBackupSilently();
+        }
     }
 }

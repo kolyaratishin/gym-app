@@ -45,33 +45,52 @@ public class AppContext {
     // Repositories
 
     private static final ClientRepository clientRepository =
-            new SqliteClientRepository(connectionFactory);
+            new SqliteClientRepository(
+                    connectionFactory
+            );
 
     private static final MembershipRepository membershipRepository =
-            new SqliteMembershipRepository(connectionFactory);
+            new SqliteMembershipRepository(
+                    connectionFactory
+            );
 
     private static final MembershipTypeRepository membershipTypeRepository =
-            new SqliteMembershipTypeRepository(connectionFactory);
+            new SqliteMembershipTypeRepository(
+                    connectionFactory
+            );
 
     private static final VisitRepository visitRepository =
-            new SqliteVisitRepository(connectionFactory);
+            new SqliteVisitRepository(
+                    connectionFactory
+            );
 
     private static final TelegramAccountRepository telegramAccountRepository =
-            new SqliteTelegramAccountRepository(connectionFactory);
+            new SqliteTelegramAccountRepository(
+                    connectionFactory
+            );
 
     private static final TelegramNotificationRepository telegramNotificationRepository =
-            new SqliteTelegramNotificationRepository(connectionFactory);
+            new SqliteTelegramNotificationRepository(
+                    connectionFactory
+            );
 
     // Core services
 
     private static final ClientService clientService =
-            new ClientService(clientRepository);
+            new ClientService(
+                    clientRepository
+            );
 
     private static final MembershipService membershipService =
-            new MembershipService(membershipRepository);
+            new MembershipService(
+                    membershipRepository,
+                    connectionFactory
+            );
 
     private static final MembershipTypeService membershipTypeService =
-            new MembershipTypeService(membershipTypeRepository);
+            new MembershipTypeService(
+                    membershipTypeRepository
+            );
 
     private static final ClientCsvService clientCsvService =
             new ClientCsvService(
@@ -107,7 +126,8 @@ public class AppContext {
                     visitRepository,
                     membershipRepository,
                     membershipTypeService,
-                    telegramNotificationService
+                    telegramNotificationService,
+                    connectionFactory
             );
 
     // Backup
@@ -116,7 +136,9 @@ public class AppContext {
             new BackupSettingsService();
 
     private static final BackupService backupService =
-            new BackupService(backupSettingsService);
+            new BackupService(
+                    backupSettingsService
+            );
 
     public static ClientRepository clientRepository() {
         return clientRepository;
@@ -188,7 +210,8 @@ public class AppContext {
     }
 
     private static GymTelegramBot createTelegramBot() {
-        String token = appConfigService.getTelegramToken();
+        String token =
+                appConfigService.getTelegramToken();
 
         if (token == null) {
             return null;
@@ -224,6 +247,4 @@ public class AppContext {
                 telegramBot
         );
     }
-
-
 }

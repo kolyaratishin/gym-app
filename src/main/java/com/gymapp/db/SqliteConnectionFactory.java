@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 
 public class SqliteConnectionFactory implements ConnectionFactory {
 
@@ -28,18 +30,26 @@ public class SqliteConnectionFactory implements ConnectionFactory {
             }
 
             if (dir == null) {
-                dir = Paths.get(".").toAbsolutePath().normalize();
+                dir = Paths.get(".")
+                        .toAbsolutePath()
+                        .normalize();
             }
 
             return dir.resolve(DB_NAME).toString();
 
         } catch (URISyntaxException e) {
-            throw new RuntimeException("Failed to resolve DB path", e);
+            throw new RuntimeException(
+                    "Failed to resolve DB path",
+                    e
+            );
         }
     }
 
-    private static final String DB_PATH = resolveDbPath();
-    private static final String URL = "jdbc:sqlite:" + DB_PATH;
+    private static final String DB_PATH =
+            resolveDbPath();
+
+    private static final String URL =
+            "jdbc:sqlite:" + DB_PATH;
 
     public static String getUrl() {
         return URL;
@@ -51,15 +61,79 @@ public class SqliteConnectionFactory implements ConnectionFactory {
 
     @Override
     public Connection getConnection() {
+        Connection connection = null;
+
         try {
-            Path parent = getDbPath().getParent();
+            Path parent =
+                    getDbPath().getParent();
+
             if (parent != null) {
                 Files.createDirectories(parent);
             }
 
-            return DriverManager.getConnection(URL);
+            connection =
+                    DriverManager.getConnection(URL);
+
+            enableForeignKeys(connection);
+            verifyForeignKeysEnabled(connection);
+
+            return connection;
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to connect to DB", e);
+            closeSilently(connection);
+
+            throw new RuntimeException(
+                    "Failed to connect to DB",
+                    e
+            );
+        }
+    }
+
+    private void enableForeignKeys(
+            Connection connection
+    ) throws Exception {
+        try (Statement statement =
+                     connection.createStatement()) {
+
+            statement.execute(
+                    "PRAGMA foreign_keys = ON"
+            );
+        }
+    }
+
+    private void verifyForeignKeysEnabled(
+            Connection connection
+    ) throws Exception {
+        try (
+                Statement statement =
+                        connection.createStatement();
+
+                ResultSet resultSet =
+                        statement.executeQuery(
+                                "PRAGMA foreign_keys"
+                        )
+        ) {
+            if (!resultSet.next()
+                    || resultSet.getInt(1) != 1) {
+
+                throw new IllegalStateException(
+                        "SQLite foreign keys are not enabled"
+                );
+            }
+        }
+    }
+
+    private void closeSilently(
+            Connection connection
+    ) {
+        if (connection == null) {
+            return;
+        }
+
+        try {
+            connection.close();
+        } catch (Exception ignored) {
+            // Nothing to do.
         }
     }
 }

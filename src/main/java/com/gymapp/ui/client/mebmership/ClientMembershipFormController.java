@@ -235,8 +235,11 @@ public class ClientMembershipFormController {
     private void loadCurrentMembership() {
         try {
             currentViewBinder.showCurrentMembership(
-                    membershipService.findActiveByClientId(client.getId())
+                    membershipService.findCurrentByClientId(
+                            client.getId()
+                    )
             );
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.MEMBERSHIP_FORM_LOAD_CURRENT,

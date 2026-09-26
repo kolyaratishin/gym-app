@@ -2,12 +2,14 @@ package com.gymapp.membership.service;
 
 import com.gymapp.audit.ActivityLogger;
 import com.gymapp.audit.AuditEventType;
+import com.gymapp.db.ConnectionFactory;
 import com.gymapp.membership.db.MembershipRepository;
 import com.gymapp.membership.db.domain.Membership;
 import com.gymapp.membership.db.domain.MembershipStatus;
 import com.gymapp.membership.db.domain.MembershipType;
 import com.gymapp.membership.db.domain.VisitPolicy;
 
+import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -17,17 +19,31 @@ import java.util.Optional;
 public class MembershipService {
 
     private final MembershipRepository membershipRepository;
+    private final ConnectionFactory connectionFactory;
 
-    public MembershipService(MembershipRepository membershipRepository) {
-        this.membershipRepository = membershipRepository;
+    public MembershipService(
+            MembershipRepository membershipRepository,
+            ConnectionFactory connectionFactory
+    ) {
+        this.membershipRepository =
+                membershipRepository;
+
+        this.connectionFactory =
+                connectionFactory;
     }
 
-    public Optional<Membership> findActiveByClientId(Long clientId) {
-        return membershipRepository.findActiveByClientId(clientId);
+    public Optional<Membership> findActiveByClientId(
+            Long clientId
+    ) {
+        return membershipRepository
+                .findActiveByClientId(clientId);
     }
 
-    public Optional<Membership> findCurrentByClientId(Long clientId) {
-        return membershipRepository.findCurrentByClientId(clientId);
+    public Optional<Membership> findCurrentByClientId(
+            Long clientId
+    ) {
+        return membershipRepository
+                .findCurrentByClientId(clientId);
     }
 
     public Membership createMembership(
@@ -35,17 +51,17 @@ public class MembershipService {
             MembershipType membershipType,
             LocalDate startDate
     ) {
-        Membership membership = saveNewMembership(
-                clientId,
-                membershipType,
-                startDate,
-                null,
-                null
-        );
+        Membership membership =
+                saveNewMembership(
+                        clientId,
+                        membershipType,
+                        startDate,
+                        null,
+                        null
+                );
 
-        ActivityLogger.log(
-                AuditEventType.MEMBERSHIP_CREATED,
-                "Створено абонемент для clientId=" + clientId
+        logMembershipCreated(
+                clientId
         );
 
         return membership;
@@ -56,13 +72,25 @@ public class MembershipService {
             MembershipType membershipType,
             LocalDate startDate
     ) {
-        membershipRepository.deactivateActiveByClientId(clientId);
+        Membership membership =
+                buildMembership(
+                        clientId,
+                        membershipType,
+                        startDate,
+                        null,
+                        null
+                );
 
-        return createMembership(
+        replaceMembershipInTransaction(
                 clientId,
-                membershipType,
-                startDate
+                membership
         );
+
+        logMembershipCreated(
+                clientId
+        );
+
+        return membership;
     }
 
     public Membership createManualMembership(
@@ -88,27 +116,90 @@ public class MembershipService {
             LocalDate endDate,
             Integer remainingVisits
     ) {
-        membershipRepository.deactivateActiveByClientId(clientId);
-
-        return createManualMembership(
-                clientId,
-                membershipType,
-                startDate,
-                endDate,
-                remainingVisits
-        );
-    }
-
-    public Membership freezeMembership(Long membershipId) {
-        Membership membership = membershipRepository
-                .findById(membershipId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Membership not found: " + membershipId
-                        )
+        Membership membership =
+                buildMembership(
+                        clientId,
+                        membershipType,
+                        startDate,
+                        endDate,
+                        remainingVisits
                 );
 
-        if (membership.getStatus() != MembershipStatus.ACTIVE) {
+        replaceMembershipInTransaction(
+                clientId,
+                membership
+        );
+
+        return membership;
+    }
+
+    private void replaceMembershipInTransaction(
+            Long clientId,
+            Membership newMembership
+    ) {
+        try (Connection connection =
+                     connectionFactory.getConnection()) {
+
+            connection.setAutoCommit(false);
+
+            try {
+                membershipRepository
+                        .deactivateActiveByClientId(
+                                connection,
+                                clientId
+                        );
+
+                membershipRepository.save(
+                        connection,
+                        newMembership
+                );
+
+                connection.commit();
+
+            } catch (Exception e) {
+                try {
+                    connection.rollback();
+
+                } catch (Exception rollbackException) {
+                    e.addSuppressed(
+                            rollbackException
+                    );
+                }
+
+                throw new RuntimeException(
+                        "Не вдалося замінити абонемент",
+                        e
+                );
+            }
+
+        } catch (RuntimeException e) {
+            throw e;
+
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Не вдалося виконати транзакцію заміни абонемента",
+                    e
+            );
+        }
+    }
+
+    public Membership freezeMembership(
+            Long membershipId
+    ) {
+        Membership membership =
+                membershipRepository
+                        .findById(membershipId)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Membership not found: "
+                                                        + membershipId
+                                        )
+                        );
+
+        if (membership.getStatus()
+                != MembershipStatus.ACTIVE) {
+
             throw new IllegalStateException(
                     "Заморозити можна тільки активний абонемент"
             );
@@ -128,7 +219,9 @@ public class MembershipService {
                 LocalDateTime.now()
         );
 
-        membershipRepository.update(membership);
+        membershipRepository.update(
+                membership
+        );
 
         ActivityLogger.log(
                 AuditEventType.MEMBERSHIP_FROZEN,
@@ -145,16 +238,23 @@ public class MembershipService {
         return membership;
     }
 
-    public Membership resumeMembership(Long membershipId) {
-        Membership membership = membershipRepository
-                .findById(membershipId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Membership not found: " + membershipId
-                        )
-                );
+    public Membership resumeMembership(
+            Long membershipId
+    ) {
+        Membership membership =
+                membershipRepository
+                        .findById(membershipId)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Membership not found: "
+                                                        + membershipId
+                                        )
+                        );
 
-        if (membership.getStatus() != MembershipStatus.FROZEN) {
+        if (membership.getStatus()
+                != MembershipStatus.FROZEN) {
+
             throw new IllegalStateException(
                     "Відновити можна тільки заморожений абонемент"
             );
@@ -173,7 +273,8 @@ public class MembershipService {
         }
 
         LocalDate pausedDate =
-                membership.getPausedAt().toLocalDate();
+                membership.getPausedAt()
+                        .toLocalDate();
 
         LocalDate resumedDate =
                 LocalDate.now();
@@ -197,7 +298,9 @@ public class MembershipService {
 
         membership.setPausedAt(null);
 
-        membershipRepository.update(membership);
+        membershipRepository.update(
+                membership
+        );
 
         ActivityLogger.log(
                 AuditEventType.MEMBERSHIP_RESUMED,
@@ -214,24 +317,42 @@ public class MembershipService {
         return membership;
     }
 
+    public void synchronizeMembershipStatuses() {
+        LocalDate today =
+                LocalDate.now();
+
+        membershipRepository
+                .activateScheduledMemberships(
+                        today
+                );
+
+        membershipRepository
+                .expireOutdatedMemberships(
+                        today
+                );
+    }
+
     public void expireOutdatedMemberships() {
-        membershipRepository.expireOutdatedMemberships(
-                LocalDate.now()
-        );
+        membershipRepository
+                .expireOutdatedMemberships(
+                        LocalDate.now()
+                );
     }
 
     public List<Membership> findExpiringBetween(
             LocalDate from,
             LocalDate to
     ) {
-        return membershipRepository.findExpiringBetween(
-                from,
-                to
-        );
+        return membershipRepository
+                .findExpiringBetween(
+                        from,
+                        to
+                );
     }
 
     public List<Membership> findExpired() {
-        return membershipRepository.findExpired();
+        return membershipRepository
+                .findExpired();
     }
 
     private Membership saveNewMembership(
@@ -241,15 +362,18 @@ public class MembershipService {
             LocalDate customEndDate,
             Integer customRemainingVisits
     ) {
-        Membership membership = buildMembership(
-                clientId,
-                membershipType,
-                startDate,
-                customEndDate,
-                customRemainingVisits
-        );
+        Membership membership =
+                buildMembership(
+                        clientId,
+                        membershipType,
+                        startDate,
+                        customEndDate,
+                        customRemainingVisits
+                );
 
-        return membershipRepository.save(membership);
+        return membershipRepository.save(
+                membership
+        );
     }
 
     private Membership buildMembership(
@@ -262,13 +386,17 @@ public class MembershipService {
         Membership membership =
                 new Membership();
 
-        membership.setClientId(clientId);
+        membership.setClientId(
+                clientId
+        );
 
         membership.setMembershipTypeId(
                 membershipType.getId()
         );
 
-        membership.setStartDate(startDate);
+        membership.setStartDate(
+                startDate
+        );
 
         membership.setEndDate(
                 resolveEndDate(
@@ -287,6 +415,7 @@ public class MembershipService {
 
         membership.setStatus(
                 resolveStatus(
+                        membership.getStartDate(),
                         membership.getEndDate(),
                         membership.getRemainingVisits()
                 )
@@ -328,11 +457,15 @@ public class MembershipService {
     }
 
     private MembershipStatus resolveStatus(
+            LocalDate startDate,
             LocalDate endDate,
             Integer remainingVisits
     ) {
+        LocalDate today =
+                LocalDate.now();
+
         if (endDate != null
-                && endDate.isBefore(LocalDate.now())) {
+                && endDate.isBefore(today)) {
 
             return MembershipStatus.EXPIRED;
         }
@@ -343,6 +476,20 @@ public class MembershipService {
             return MembershipStatus.EXPIRED;
         }
 
+        if (startDate.isAfter(today)) {
+            return MembershipStatus.SCHEDULED;
+        }
+
         return MembershipStatus.ACTIVE;
+    }
+
+    private void logMembershipCreated(
+            Long clientId
+    ) {
+        ActivityLogger.log(
+                AuditEventType.MEMBERSHIP_CREATED,
+                "Створено абонемент для clientId="
+                        + clientId
+        );
     }
 }

@@ -5,7 +5,9 @@ import com.gymapp.audit.ErrorLogMessages;
 import com.gymapp.audit.UserErrorMessages;
 import com.gymapp.backup.BackupService;
 import com.gymapp.context.AppContext;
+import com.gymapp.telegram.bot.GymTelegramBot;
 import com.gymapp.ui.common.DialogService;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -27,26 +29,40 @@ public class DatabaseController {
     private Label backupStatusLabel;
 
     public DatabaseController() {
-        this.backupService = AppContext.backupService();
+        this.backupService =
+                AppContext.backupService();
     }
 
     @FXML
     public void initialize() {
-        backupService.getExtraBackupPath()
-                .ifPresent(path -> extraBackupPathField.setText(path.toString()));
+        backupService
+                .getExtraBackupPath()
+                .ifPresent(
+                        path ->
+                                extraBackupPathField
+                                        .setText(
+                                                path.toString()
+                                        )
+                );
     }
 
     @FXML
     private void onCreateBackup() {
         try {
-            Path backupFile = backupService.createLocalBackup();
+            Path backupFile =
+                    backupService.createLocalBackup();
 
             DialogService.showInfo(
                     "Резервна копія",
-                    "Резервну копію створено:\n" + backupFile.toAbsolutePath()
+                    "Резервну копію створено:\n"
+                            + backupFile.toAbsolutePath()
             );
 
-            backupStatusLabel.setText("Копію створено: " + backupFile.toAbsolutePath());
+            backupStatusLabel.setText(
+                    "Копію створено: "
+                            + backupFile.toAbsolutePath()
+            );
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.DATABASE_CREATE_BACKUP,
@@ -58,31 +74,49 @@ public class DatabaseController {
 
     @FXML
     private void onChooseExtraBackupPath() {
-        DirectoryChooser chooser = new DirectoryChooser();
-        chooser.setTitle("Виберіть папку для додаткової копії");
+        DirectoryChooser chooser =
+                new DirectoryChooser();
 
-        Stage stage = (Stage) extraBackupPathField.getScene().getWindow();
-        File selectedDirectory = chooser.showDialog(stage);
+        chooser.setTitle(
+                "Виберіть папку для додаткової копії"
+        );
+
+        Stage stage =
+                (Stage)
+                        extraBackupPathField
+                                .getScene()
+                                .getWindow();
+
+        File selectedDirectory =
+                chooser.showDialog(stage);
 
         if (selectedDirectory != null) {
-            extraBackupPathField.setText(selectedDirectory.toPath().toString());
+            extraBackupPathField.setText(
+                    selectedDirectory
+                            .toPath()
+                            .toString()
+            );
         }
     }
 
     @FXML
     private void onSaveExtraBackupPath() {
         try {
-            backupService.saveExtraBackupPath(extraBackupPathField.getText());
+            backupService.saveExtraBackupPath(
+                    extraBackupPathField.getText()
+            );
 
             DialogService.showInfo(
                     "Налаштування",
                     "Шлях для додаткової копії збережено."
             );
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.DATABASE_SAVE_EXTRA_BACKUP_PATH,
                     UserErrorMessages.BACKUP_SETTINGS_SAVE_FAILED,
-                    "path=" + extraBackupPathField.getText(),
+                    "path="
+                            + extraBackupPathField.getText(),
                     e
             );
         }
@@ -92,12 +126,15 @@ public class DatabaseController {
     private void onClearExtraBackupPath() {
         try {
             extraBackupPathField.clear();
-            backupService.clearExtraBackupPath();
+
+            backupService
+                    .clearExtraBackupPath();
 
             DialogService.showInfo(
                     "Налаштування",
                     "Додатковий шлях очищено."
             );
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.DATABASE_CLEAR_EXTRA_BACKUP_PATH,
@@ -109,44 +146,88 @@ public class DatabaseController {
 
     @FXML
     private void onRestoreBackup() {
-        FileChooser chooser = new FileChooser();
-        chooser.setTitle("Виберіть резервну копію для відновлення");
+        FileChooser chooser =
+                new FileChooser();
 
-        chooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("SQLite backup (*.db)", "*.db")
+        chooser.setTitle(
+                "Виберіть резервну копію для відновлення"
         );
 
-        Stage stage = (Stage) extraBackupPathField.getScene().getWindow();
-        File selectedFile = chooser.showOpenDialog(stage);
+        chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter(
+                        "SQLite backup (*.db)",
+                        "*.db"
+                )
+        );
+
+        Stage stage =
+                (Stage)
+                        extraBackupPathField
+                                .getScene()
+                                .getWindow();
+
+        File selectedFile =
+                chooser.showOpenDialog(stage);
 
         if (selectedFile == null) {
             return;
         }
 
-        boolean confirmed = DialogService.showConfirm(
-                "Підтвердження відновлення",
-                "Увага! Поточна база даних буде замінена.\n\nВідновити базу з файлу?\n"
-                        + selectedFile.getAbsolutePath()
-        );
+        boolean confirmed =
+                DialogService.showConfirm(
+                        "Підтвердження відновлення",
+                        """
+                        Увага! Поточна база даних буде замінена.
+
+                        Після успішного відновлення Gym App буде закрито.
+                        Для продовження роботи потрібно запустити програму знову.
+
+                        Відновити базу з файлу?
+
+                        """
+                                + selectedFile.getAbsolutePath()
+                );
 
         if (!confirmed) {
             return;
         }
 
         try {
-            backupService.restoreBackup(selectedFile.toPath());
+            stopTelegram();
+
+            backupService.restoreBackup(
+                    selectedFile.toPath()
+            );
 
             DialogService.showInfo(
-                    "Відновлення",
-                    "Базу даних успішно відновлено.\nРекомендується перезапустити додаток."
+                    "Відновлення завершено",
+                    """
+                    Базу даних успішно відновлено.
+
+                    Gym App зараз буде закрито.
+                    Запустіть програму знову для продовження роботи.
+                    """
             );
+
+            Platform.exit();
+
         } catch (Exception e) {
             ErrorHandler.handle(
                     ErrorLogMessages.DATABASE_RESTORE_BACKUP,
                     UserErrorMessages.BACKUP_RESTORE_FAILED,
-                    "backupFile=" + selectedFile.getAbsolutePath(),
+                    "backupFile="
+                            + selectedFile.getAbsolutePath(),
                     e
             );
+        }
+    }
+
+    private void stopTelegram() {
+        GymTelegramBot telegramBot =
+                AppContext.telegramBot();
+
+        if (telegramBot != null) {
+            telegramBot.stop();
         }
     }
 }
