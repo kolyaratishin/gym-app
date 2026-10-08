@@ -1,9 +1,11 @@
+
 package com.gymapp.telegram.bot;
 
 import com.gymapp.telegram.service.TelegramLinkService;
 import com.gymapp.telegram.service.TelegramLinkService.LinkResult;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.model.Contact;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
@@ -12,6 +14,7 @@ import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardRemove;
 import com.pengrad.telegrambot.request.GetMe;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SetMyCommands;
 import com.pengrad.telegrambot.response.GetMeResponse;
 
 public class GymTelegramBot {
@@ -44,6 +47,8 @@ public class GymTelegramBot {
         }
 
         try {
+            registerCommands();
+
             System.out.println(
                     "Telegram bot: starting polling..."
             );
@@ -112,6 +117,36 @@ public class GymTelegramBot {
         }
     }
 
+    private void registerCommands() {
+        try {
+            var response = bot.execute(
+                    new SetMyCommands(
+                            new BotCommand(
+                                    "start",
+                                    "Почати / Підключити профіль"
+                            )
+                    )
+            );
+
+            if (response.isOk()) {
+                System.out.println(
+                        "Telegram bot: commands registered"
+                );
+            } else {
+                System.err.println(
+                        "Telegram bot: failed to register commands"
+                );
+            }
+
+        } catch (Exception e) {
+            System.err.println(
+                    "Telegram bot: command registration error"
+            );
+
+            e.printStackTrace();
+        }
+    }
+
     private boolean validateConnection() {
         try {
             GetMeResponse response =
@@ -159,7 +194,14 @@ public class GymTelegramBot {
             return;
         }
 
-        if ("/start".equals(message.text())) {
+        String text = message.text();
+
+        if (text == null) {
+            return;
+        }
+
+        if (text.equals("/start")
+                || text.startsWith("/start ")) {
             handleStart(chatId);
         }
     }
